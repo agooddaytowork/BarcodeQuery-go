@@ -42,9 +42,8 @@ func (db *BarcodeDBHashStorageImpl) Dump() *BarcodeDBError {
 		}
 	}
 
-	for key, element := range db.Store {
-		fmt.Println("Key:", key, "=>", "Element:", element)
-		_, err := f.WriteString(key)
+	for key, _ := range db.Store {
+		_, err := f.WriteString(key + "\n")
 		if err != nil {
 			return &BarcodeDBError{
 				ExceptionMsg: err.Error(),
@@ -61,10 +60,10 @@ func (db *BarcodeDBHashStorageImpl) Dump() *BarcodeDBError {
 	return nil
 }
 
-func (db *BarcodeDBHashStorageImpl) Insert(input string) *BarcodeDBError {
+func (db *BarcodeDBHashStorageImpl) Insert(input string, queriedValue int) *BarcodeDBError {
 
 	if _, ok := db.Store[input]; !ok {
-		db.Store[input] = 0
+		db.Store[input] = queriedValue
 		return nil
 	}
 

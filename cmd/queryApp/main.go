@@ -7,18 +7,30 @@ import (
 )
 
 func main() {
-	theDB := db.BarcodeDBHashStorageImpl{
+	existingDB := db.BarcodeDBHashStorageImpl{
 		FilePath: "/Users/tam/Workspace/Duc/BarcodeQuery/test/100k.txt",
 		Store:    make(map[string]int),
 	}
-	err := theDB.Load()
+	err := existingDB.Load()
+
+	errorDB := db.BarcodeDBHashStorageImpl{
+		FilePath: "/Users/tam/Workspace/Duc/BarcodeQuery/test/errorDB.txt",
+		Store:    make(map[string]int),
+	}
+
+	queriedHistoryDB := db.BarcodeDBHashStorageImpl{
+		FilePath: "/Users/tam/Workspace/Duc/BarcodeQuery/test/queriedHistoryDB.txt",
+		Store:    make(map[string]int),
+	}
 
 	if err != nil {
 		panic(err)
 	}
 	program := app2.BarcodeQueryAppImpl{
-		Db:     &theDB,
-		Reader: &reader.ConsoleReader{},
+		ExistingDB:       &existingDB,
+		ErrorDB:          &errorDB,
+		QueriedHistoryDB: &queriedHistoryDB,
+		Reader:           &reader.ConsoleReader{},
 	}
 
 	program.Run()
