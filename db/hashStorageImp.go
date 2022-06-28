@@ -8,8 +8,9 @@ import (
 )
 
 type BarcodeDBHashStorageImpl struct {
-	FilePath string
-	Store    map[string]int
+	FilePath        string
+	Store           map[string]int
+	DBQueryCallBack func(query string, queryCounter int)
 }
 
 func (db *BarcodeDBHashStorageImpl) Load() *BarcodeDBError {
@@ -94,7 +95,10 @@ func (db *BarcodeDBHashStorageImpl) Query(input string) int {
 		newQueriedNumber := queriedNumber + 1
 		db.Store[input] = newQueriedNumber
 
+		go db.DBQueryCallBack(input, newQueriedNumber)
 		return newQueriedNumber
 	}
+
+	go db.DBQueryCallBack(input, -1)
 	return -1
 }
