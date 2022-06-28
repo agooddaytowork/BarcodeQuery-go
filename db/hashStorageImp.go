@@ -45,7 +45,7 @@ func (db *BarcodeDBHashStorageImpl) dump(inputPath string) *BarcodeDBError {
 		}
 	}
 
-	for key, _ := range db.Store {
+	for key := range db.Store {
 		_, err := f.WriteString(key + "\n")
 		if err != nil {
 			return &BarcodeDBError{
