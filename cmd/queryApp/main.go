@@ -27,10 +27,12 @@ func main() {
 		panic(err)
 	}
 	program := app2.BarcodeQueryAppImpl{
-		ExistingDB:       &existingDB,
-		ErrorDB:          &errorDB,
-		QueriedHistoryDB: &queriedHistoryDB,
-		Reader:           &reader.ConsoleReader{},
+		ExistingDB:        &existingDB,
+		ErrorDB:           &errorDB,
+		QueriedHistoryDB:  &queriedHistoryDB,
+		Reader:            &reader.ConsoleReader{},
+		QueryCounter:      0,
+		QueryCounterLimit: 10,
 	}
 
 	program.Run()

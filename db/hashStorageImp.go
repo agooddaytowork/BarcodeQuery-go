@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 type BarcodeDBHashStorageImpl struct {
@@ -32,11 +33,13 @@ func (db *BarcodeDBHashStorageImpl) Load() *BarcodeDBError {
 	return nil
 }
 
-func (db *BarcodeDBHashStorageImpl) Dump() *BarcodeDBError {
-	f, err := os.Create(db.FilePath)
+func (db *BarcodeDBHashStorageImpl) dump(inputPath string) *BarcodeDBError {
+	if len(db.Store) == 0 {
+		return nil
+	}
 
+	f, err := os.Create(inputPath)
 	if err != nil {
-
 		return &BarcodeDBError{
 			ExceptionMsg: err.Error(),
 		}
@@ -58,6 +61,15 @@ func (db *BarcodeDBHashStorageImpl) Dump() *BarcodeDBError {
 		}
 	}(f)
 	return nil
+}
+
+func (db *BarcodeDBHashStorageImpl) Dump() *BarcodeDBError {
+	return db.dump(db.FilePath)
+}
+
+func (db *BarcodeDBHashStorageImpl) DumpWithTimeStamp() *BarcodeDBError {
+	fileName := strings.Replace(db.FilePath, ".txt", "", 1) + "-" + time.Now().Format("2006-01-02-15-04-05") + ".txt"
+	return db.dump(fileName)
 }
 
 func (db *BarcodeDBHashStorageImpl) Insert(input string, queriedValue int) *BarcodeDBError {

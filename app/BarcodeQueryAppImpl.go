@@ -49,6 +49,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 		} else if queryResult == 1 {
 			// found barcode
 			// do something
+			app.QueryCounter++
 		} else {
 			// found duplicated query
 			duplicateQuery := app.QueriedHistoryDB.Query(queryString)
@@ -59,13 +60,18 @@ func (app *BarcodeQueryAppImpl) Run() {
 
 		}
 
+		if app.QueryCounter == app.QueryCounterLimit {
+			app.ErrorDB.DumpWithTimeStamp()
+			app.QueriedHistoryDB.DumpWithTimeStamp()
+		}
+
 		fmt.Printf("Query result %s : %d \n", queryString, queryResult)
 	}
 
 	defer func() {
 		// Todo: dump these when DBCounter hit limit as well
 		fmt.Println("Cleaning up")
-		app.ErrorDB.Dump()
-		app.QueriedHistoryDB.Dump()
+		app.ErrorDB.DumpWithTimeStamp()
+		app.QueriedHistoryDB.DumpWithTimeStamp()
 	}()
 }
