@@ -1,40 +1,43 @@
 package main
 
 import (
-	app2 "BarcodeQuery/app"
+	"BarcodeQuery/app"
 	"BarcodeQuery/db"
 	"BarcodeQuery/reader"
-	"fmt"
+	"BarcodeQuery/web"
+	"github.com/textileio/go-threads/broadcast"
 )
 
-func callBack(input string, value int) {
-	fmt.Println("callBack", input, " ", value)
-}
-
 func main() {
+
+	dbBroadcast := broadcast.NewBroadcaster(0)
+
 	existingDB := db.BarcodeDBHashStorageImpl{
-		FilePath:        "/Users/tam/Workspace/Duc/BarcodeQuery/test/100k.txt",
-		Store:           make(map[string]int),
-		DBQueryCallBack: callBack,
+		DBRole:      db.ExistingDBRole,
+		FilePath:    "/Users/tamduong/Workspace/duc/BarcodeQuery-go/test/100k.txt",
+		Store:       make(map[string]int),
+		Broadcaster: dbBroadcast,
 	}
 	err := existingDB.Load()
 
 	errorDB := db.BarcodeDBHashStorageImpl{
-		FilePath:        "/Users/tam/Workspace/Duc/BarcodeQuery/test/errorDB.txt",
-		Store:           make(map[string]int),
-		DBQueryCallBack: callBack,
+		DBRole:      db.ErrorDBRole,
+		FilePath:    "/Users/tamduong/Workspace/duc/BarcodeQuery-go/test/blabla.txt",
+		Store:       make(map[string]int),
+		Broadcaster: dbBroadcast,
 	}
 
 	queriedHistoryDB := db.BarcodeDBHashStorageImpl{
-		FilePath:        "/Users/tam/Workspace/Duc/BarcodeQuery/test/queriedHistoryDB.txt",
-		Store:           make(map[string]int),
-		DBQueryCallBack: callBack,
+		DBRole:      db.QueriedHistoryDBRole,
+		FilePath:    "/Users/tamduong/Workspace/duc/BarcodeQuery-go/test/bloblo.txt",
+		Store:       make(map[string]int),
+		Broadcaster: dbBroadcast,
 	}
 
 	if err != nil {
 		panic(err)
 	}
-	program := app2.BarcodeQueryAppImpl{
+	program := app.BarcodeQueryAppImpl{
 		ExistingDB:        &existingDB,
 		ErrorDB:           &errorDB,
 		QueriedHistoryDB:  &queriedHistoryDB,
@@ -43,6 +46,12 @@ func main() {
 		QueryCounterLimit: 10,
 	}
 
-	program.Run()
+	go program.Run()
+
+	theWeb := web.BarcodeQueryWebImpl{
+		Broadcaster: dbBroadcast,
+	}
+
+	theWeb.Run()
 
 }

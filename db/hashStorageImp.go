@@ -2,15 +2,17 @@ package db
 
 import (
 	"fmt"
+	"github.com/textileio/go-threads/broadcast"
 	"os"
 	"strings"
 	"time"
 )
 
 type BarcodeDBHashStorageImpl struct {
-	FilePath        string
-	Store           map[string]int
-	DBQueryCallBack func(query string, queryCounter int)
+	DBRole      DBRole
+	FilePath    string
+	Store       map[string]int
+	Broadcaster *broadcast.Broadcaster
 }
 
 func (db *BarcodeDBHashStorageImpl) Load() *BarcodeDBError {
@@ -94,11 +96,18 @@ func (db *BarcodeDBHashStorageImpl) Query(input string) int {
 	if queriedNumber, ok := db.Store[input]; ok {
 		newQueriedNumber := queriedNumber + 1
 		db.Store[input] = newQueriedNumber
-
-		go db.DBQueryCallBack(input, newQueriedNumber)
+		db.Broadcaster.Send(DBQueryResult{
+			DBRole:      db.DBRole,
+			QueryString: input,
+			QueryResult: newQueriedNumber,
+		})
 		return newQueriedNumber
 	}
 
-	go db.DBQueryCallBack(input, -1)
+	db.Broadcaster.Send(DBQueryResult{
+		DBRole:      db.DBRole,
+		QueryString: input,
+		QueryResult: -1,
+	})
 	return -1
 }

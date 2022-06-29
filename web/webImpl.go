@@ -1,21 +1,24 @@
 package web
 
 import (
-	"BarcodeQuery/app"
 	"github.com/gorilla/websocket"
+	"github.com/textileio/go-threads/broadcast"
 	"log"
 	"net/http"
 )
 
 type BarcodeQueryWebImpl struct {
-	handler ClientHandler
+	Broadcaster *broadcast.Broadcaster
 }
 
 func (web *BarcodeQueryWebImpl) Run() {
-
+	http.HandleFunc("/ws", web.barcodeWS)
+	http.ListenAndServe(":80", nil)
 }
 
-var upgrade = websocket.Upgrader{}
+var upgrade = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool { return true },
+}
 
 func (web *BarcodeQueryWebImpl) barcodeWS(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrade.Upgrade(w, r, nil)
@@ -23,9 +26,10 @@ func (web *BarcodeQueryWebImpl) barcodeWS(w http.ResponseWriter, r *http.Request
 		log.Print("upgrade:", err)
 		return
 	}
-	go web.handler.handle(c)
-}
+	handler := ClientHandlerImpl{
+		socket:     c,
+		dbListener: web.Broadcaster.Listen(),
+	}
 
-func (web *BarcodeQueryWebImpl) RegisterDBCallBack(dbRole app.DBRole, callback func()) {
-	http.HandleFunc("/ws", web.barcodeWS)
+	go handler.handle()
 }

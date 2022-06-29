@@ -1,9 +1,9 @@
-package app
+package db
 
 type DBRole int16
 
 const (
-	ExistinDBRole DBRole = iota
+	ExistingDBRole DBRole = iota
 	ErrorDBRole
 	QueriedHistoryDBRole
 )
