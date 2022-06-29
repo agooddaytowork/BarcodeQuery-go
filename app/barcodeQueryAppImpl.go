@@ -13,12 +13,13 @@ import (
 
 type BarcodeQueryAppImpl struct {
 	ExistingDB        db.BarcodeDB
-	QueriedHistoryDB  db.BarcodeDB
+	DuplicatedItemDB  db.BarcodeDB
 	ErrorDB           db.BarcodeDB
+	ScannedDB         db.BarcodeDB
 	Reader            reader.BarcodeReader
 	QueryCounter      int
 	QueryCounterLimit int
-	Broadcaster       *broadcast.Broadcaster
+	DBBroadcast       *broadcast.Broadcaster
 }
 
 func (app *BarcodeQueryAppImpl) Run() {
@@ -36,6 +37,10 @@ func (app *BarcodeQueryAppImpl) Run() {
 		run = false
 	}()
 
+	go app.ExistingDB.HandleClientRequest()
+	go app.DuplicatedItemDB.HandleClientRequest()
+	go app.ErrorDB.HandleClientRequest()
+
 	for run {
 		queryString := app.Reader.Read()
 		queryResult := app.ExistingDB.Query(queryString)
@@ -52,24 +57,30 @@ func (app *BarcodeQueryAppImpl) Run() {
 		} else if queryResult == 1 {
 			// found barcode
 			// do something
+			app.ScannedDB.Insert(queryString, 0)
 			app.QueryCounter++
 		} else {
 			// found duplicated query
-			duplicateQuery := app.QueriedHistoryDB.Query(queryString)
+			duplicateQuery := app.DuplicatedItemDB.Query(queryString)
 
 			if duplicateQuery == -1 {
-				app.QueriedHistoryDB.Insert(queryString, 0)
+				app.DuplicatedItemDB.Insert(queryString, 0)
 			}
-
 		}
 
 		if app.QueryCounter == app.QueryCounterLimit {
 			app.QueryCounter = 0
+			app.ScannedDB.DumpWithTimeStamp()
+
 			app.ErrorDB.DumpWithTimeStamp()
-			app.QueriedHistoryDB.DumpWithTimeStamp()
+			app.DuplicatedItemDB.DumpWithTimeStamp()
+
+			app.ScannedDB.Clear()
+			app.ErrorDB.Clear()
+			app.DuplicatedItemDB.Clear()
 		}
 
-		app.Broadcaster.Send(model.BarcodeQueryMessage{
+		app.DBBroadcast.Send(model.BarcodeQueryMessage{
 			MessageType: model.CounterNoti,
 			Payload:     app.QueryCounter,
 		})
@@ -80,7 +91,8 @@ func (app *BarcodeQueryAppImpl) Run() {
 	defer func() {
 		// Todo: dump these when DBCounter hit limit as well
 		fmt.Println("Cleaning up")
+		app.ScannedDB.DumpWithTimeStamp()
 		app.ErrorDB.DumpWithTimeStamp()
-		app.QueriedHistoryDB.DumpWithTimeStamp()
+		app.DuplicatedItemDB.DumpWithTimeStamp()
 	}()
 }

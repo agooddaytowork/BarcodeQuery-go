@@ -10,28 +10,39 @@ import (
 
 func main() {
 
-	msgBroadCast := broadcast.NewBroadcaster(100)
+	dbBroadCast := broadcast.NewBroadcaster(100)
+	clientBroadCast := broadcast.NewBroadcaster(100)
 
 	existingDB := db.BarcodeDBHashStorageImpl{
-		DBRole:      db.ExistingDBRole,
-		FilePath:    "/Users/tamduong/Workspace/duc/BarcodeQuery-go/test/100k.txt",
-		Store:       make(map[string]int),
-		Broadcaster: msgBroadCast,
+		DBRole:         db.ExistingDBRole,
+		FilePath:       "test/100k.txt",
+		Store:          make(map[string]int),
+		DBBroadCast:    dbBroadCast,
+		ClientListener: clientBroadCast.Listen(),
 	}
 	err := existingDB.Load()
 
 	errorDB := db.BarcodeDBHashStorageImpl{
-		DBRole:      db.ErrorDBRole,
-		FilePath:    "/Users/tamduong/Workspace/duc/BarcodeQuery-go/test/blabla.txt",
-		Store:       make(map[string]int),
-		Broadcaster: msgBroadCast,
+		DBRole:         db.ErrorDBRole,
+		FilePath:       "test/errorDB.txt",
+		Store:          make(map[string]int),
+		DBBroadCast:    dbBroadCast,
+		ClientListener: clientBroadCast.Listen(),
 	}
 
-	queriedHistoryDB := db.BarcodeDBHashStorageImpl{
-		DBRole:      db.QueriedHistoryDBRole,
-		FilePath:    "/Users/tamduong/Workspace/duc/BarcodeQuery-go/test/bloblo.txt",
+	duplicatedHistoryDbB := db.BarcodeDBHashStorageImpl{
+		DBRole:         db.DuplicatedHistoryDB,
+		FilePath:       "test/duplicatedDB.txt",
+		Store:          make(map[string]int),
+		DBBroadCast:    dbBroadCast,
+		ClientListener: clientBroadCast.Listen(),
+	}
+
+	scannedDB := db.BarcodeDBHashStorageImpl{
+		DBRole:      db.ScannedDB,
+		FilePath:    "test/scannedDB.txt",
 		Store:       make(map[string]int),
-		Broadcaster: msgBroadCast,
+		DBBroadCast: dbBroadCast,
 	}
 
 	if err != nil {
@@ -40,17 +51,19 @@ func main() {
 	program := app.BarcodeQueryAppImpl{
 		ExistingDB:        &existingDB,
 		ErrorDB:           &errorDB,
-		QueriedHistoryDB:  &queriedHistoryDB,
+		DuplicatedItemDB:  &duplicatedHistoryDbB,
+		ScannedDB:         &scannedDB,
 		Reader:            &reader.ConsoleReader{},
 		QueryCounter:      0,
 		QueryCounterLimit: 10,
-		Broadcaster:       msgBroadCast,
+		DBBroadcast:       dbBroadCast,
 	}
 
 	go program.Run()
 
 	theWeb := web.BarcodeQueryWebImpl{
-		Broadcaster: msgBroadCast,
+		DBBroadcast:     dbBroadCast,
+		ClientBroadCast: clientBroadCast,
 	}
 
 	theWeb.Run()

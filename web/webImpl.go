@@ -8,7 +8,8 @@ import (
 )
 
 type BarcodeQueryWebImpl struct {
-	Broadcaster *broadcast.Broadcaster
+	DBBroadcast     *broadcast.Broadcaster
+	ClientBroadCast *broadcast.Broadcaster
 }
 
 func (web *BarcodeQueryWebImpl) Run() {
@@ -27,8 +28,9 @@ func (web *BarcodeQueryWebImpl) barcodeWS(w http.ResponseWriter, r *http.Request
 		return
 	}
 	handler := ClientHandlerImpl{
-		socket:     c,
-		dbListener: web.Broadcaster.Listen(),
+		socket:          c,
+		dbListener:      web.DBBroadcast.Listen(),
+		clientBroadcast: web.ClientBroadCast,
 	}
 
 	go handler.handle()

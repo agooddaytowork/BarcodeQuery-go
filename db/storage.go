@@ -6,4 +6,6 @@ type BarcodeDB interface {
 	DumpWithTimeStamp() *BarcodeDBError
 	Insert(input string, queriedValue int) *BarcodeDBError
 	Query(input string) int
+	Clear()
+	HandleClientRequest()
 }

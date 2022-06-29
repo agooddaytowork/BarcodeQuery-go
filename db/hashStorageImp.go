@@ -10,10 +10,31 @@ import (
 )
 
 type BarcodeDBHashStorageImpl struct {
-	DBRole      DBRole
-	FilePath    string
-	Store       map[string]int
-	Broadcaster *broadcast.Broadcaster
+	DBRole         DBRole
+	FilePath       string
+	Store          map[string]int
+	DBBroadCast    *broadcast.Broadcaster
+	ClientListener *broadcast.Listener
+}
+
+func (db *BarcodeDBHashStorageImpl) HandleClientRequest() {
+	for true {
+		request := <-db.ClientListener.Channel()
+		msg := request.(model.BarcodeQueryMessage)
+		if msg.MessageType == model.DBStateUpdateRequest {
+			if msg.Payload.(DBRole) == db.DBRole {
+				db.DBBroadCast.Send(
+					model.BarcodeQueryMessage{
+						MessageType: model.DBStateUpdateResponse,
+						Payload: StateUpdate{
+							DBRole: db.DBRole,
+							State:  db.Store,
+						},
+					},
+				)
+			}
+		}
+	}
 }
 
 func (db *BarcodeDBHashStorageImpl) Load() *BarcodeDBError {
@@ -97,9 +118,9 @@ func (db *BarcodeDBHashStorageImpl) Query(input string) int {
 	if queriedNumber, ok := db.Store[input]; ok {
 		newQueriedNumber := queriedNumber + 1
 		db.Store[input] = newQueriedNumber
-		db.Broadcaster.Send(model.BarcodeQueryMessage{
+		db.DBBroadCast.Send(model.BarcodeQueryMessage{
 			MessageType: model.DBQueryNoti,
-			Payload: DBQueryResult{
+			Payload: QueryResult{
 				DBRole:      db.DBRole,
 				QueryString: input,
 				QueryResult: newQueriedNumber,
@@ -108,13 +129,17 @@ func (db *BarcodeDBHashStorageImpl) Query(input string) int {
 		return newQueriedNumber
 	}
 
-	db.Broadcaster.Send(model.BarcodeQueryMessage{
+	db.DBBroadCast.Send(model.BarcodeQueryMessage{
 		MessageType: model.DBQueryNoti,
-		Payload: DBQueryResult{
+		Payload: QueryResult{
 			DBRole:      db.DBRole,
 			QueryString: input,
 			QueryResult: -1,
 		},
 	})
 	return -1
+}
+
+func (db *BarcodeDBHashStorageImpl) Clear() {
+	db.Store = make(map[string]int)
 }
