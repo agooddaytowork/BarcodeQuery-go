@@ -4,6 +4,7 @@ type MessageType int16
 
 const (
 	DBQueryNoti MessageType = iota
+	CounterNoti
 )
 
 type BarcodeQueryMessage struct {

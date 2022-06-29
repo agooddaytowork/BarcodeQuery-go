@@ -1,6 +1,7 @@
 package db
 
 import (
+	"BarcodeQuery/model"
 	"fmt"
 	"github.com/textileio/go-threads/broadcast"
 	"os"
@@ -96,18 +97,24 @@ func (db *BarcodeDBHashStorageImpl) Query(input string) int {
 	if queriedNumber, ok := db.Store[input]; ok {
 		newQueriedNumber := queriedNumber + 1
 		db.Store[input] = newQueriedNumber
-		db.Broadcaster.Send(DBQueryResult{
-			DBRole:      db.DBRole,
-			QueryString: input,
-			QueryResult: newQueriedNumber,
+		db.Broadcaster.Send(model.BarcodeQueryMessage{
+			MessageType: model.DBQueryNoti,
+			Payload: DBQueryResult{
+				DBRole:      db.DBRole,
+				QueryString: input,
+				QueryResult: newQueriedNumber,
+			},
 		})
 		return newQueriedNumber
 	}
 
-	db.Broadcaster.Send(DBQueryResult{
-		DBRole:      db.DBRole,
-		QueryString: input,
-		QueryResult: -1,
+	db.Broadcaster.Send(model.BarcodeQueryMessage{
+		MessageType: model.DBQueryNoti,
+		Payload: DBQueryResult{
+			DBRole:      db.DBRole,
+			QueryString: input,
+			QueryResult: -1,
+		},
 	})
 	return -1
 }

@@ -2,8 +2,10 @@ package app
 
 import (
 	"BarcodeQuery/db"
+	"BarcodeQuery/model"
 	"BarcodeQuery/reader"
 	"fmt"
+	"github.com/textileio/go-threads/broadcast"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,6 +18,7 @@ type BarcodeQueryAppImpl struct {
 	Reader            reader.BarcodeReader
 	QueryCounter      int
 	QueryCounterLimit int
+	Broadcaster       *broadcast.Broadcaster
 }
 
 func (app *BarcodeQueryAppImpl) Run() {
@@ -61,9 +64,15 @@ func (app *BarcodeQueryAppImpl) Run() {
 		}
 
 		if app.QueryCounter == app.QueryCounterLimit {
+			app.QueryCounter = 0
 			app.ErrorDB.DumpWithTimeStamp()
 			app.QueriedHistoryDB.DumpWithTimeStamp()
 		}
+
+		app.Broadcaster.Send(model.BarcodeQueryMessage{
+			MessageType: model.CounterNoti,
+			Payload:     app.QueryCounter,
+		})
 
 		fmt.Printf("Query result %s : %d \n", queryString, queryResult)
 	}

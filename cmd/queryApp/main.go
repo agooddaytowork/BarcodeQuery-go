@@ -10,13 +10,13 @@ import (
 
 func main() {
 
-	dbBroadcast := broadcast.NewBroadcaster(0)
+	msgBroadCast := broadcast.NewBroadcaster(100)
 
 	existingDB := db.BarcodeDBHashStorageImpl{
 		DBRole:      db.ExistingDBRole,
 		FilePath:    "/Users/tamduong/Workspace/duc/BarcodeQuery-go/test/100k.txt",
 		Store:       make(map[string]int),
-		Broadcaster: dbBroadcast,
+		Broadcaster: msgBroadCast,
 	}
 	err := existingDB.Load()
 
@@ -24,14 +24,14 @@ func main() {
 		DBRole:      db.ErrorDBRole,
 		FilePath:    "/Users/tamduong/Workspace/duc/BarcodeQuery-go/test/blabla.txt",
 		Store:       make(map[string]int),
-		Broadcaster: dbBroadcast,
+		Broadcaster: msgBroadCast,
 	}
 
 	queriedHistoryDB := db.BarcodeDBHashStorageImpl{
 		DBRole:      db.QueriedHistoryDBRole,
 		FilePath:    "/Users/tamduong/Workspace/duc/BarcodeQuery-go/test/bloblo.txt",
 		Store:       make(map[string]int),
-		Broadcaster: dbBroadcast,
+		Broadcaster: msgBroadCast,
 	}
 
 	if err != nil {
@@ -44,12 +44,13 @@ func main() {
 		Reader:            &reader.ConsoleReader{},
 		QueryCounter:      0,
 		QueryCounterLimit: 10,
+		Broadcaster:       msgBroadCast,
 	}
 
 	go program.Run()
 
 	theWeb := web.BarcodeQueryWebImpl{
-		Broadcaster: dbBroadcast,
+		Broadcaster: msgBroadCast,
 	}
 
 	theWeb.Run()
