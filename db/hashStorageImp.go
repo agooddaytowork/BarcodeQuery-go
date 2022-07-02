@@ -10,25 +10,40 @@ import (
 )
 
 type BarcodeDBHashStorageImpl struct {
-	DBRole         DBRole
-	FilePath       string
-	Store          map[string]int
-	DBBroadCast    *broadcast.Broadcaster
-	ClientListener *broadcast.Listener
+	DBRole              DBRole
+	FilePath            string
+	Store               map[string]int
+	DBBroadCast         *broadcast.Broadcaster
+	ClientListener      *broadcast.Listener
+	IgnoreClientRequest bool
+}
+
+func (db *BarcodeDBHashStorageImpl) GetStoreAsQueryResultArray() []QueryResult {
+	var result []QueryResult
+
+	for element := range db.Store {
+		result = append(result, QueryResult{
+			DBRole:      db.DBRole,
+			QueryString: element,
+			QueryResult: db.Store[element],
+		})
+	}
+
+	return result
 }
 
 func (db *BarcodeDBHashStorageImpl) HandleClientRequest() {
 	for true {
 		request := <-db.ClientListener.Channel()
 		msg := request.(model.BarcodeQueryMessage)
-		if msg.MessageType == model.DBStateUpdateRequest {
+		if msg.MessageType == model.DBStateUpdateRequest && len(db.Store) != 0 {
 			if msg.Payload.(DBRole) == db.DBRole {
 				db.DBBroadCast.Send(
 					model.BarcodeQueryMessage{
 						MessageType: model.DBStateUpdateResponse,
 						Payload: StateUpdate{
 							DBRole: db.DBRole,
-							State:  db.Store,
+							State:  db.GetStoreAsQueryResultArray(),
 						},
 					},
 				)

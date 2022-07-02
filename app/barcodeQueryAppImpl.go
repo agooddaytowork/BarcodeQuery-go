@@ -6,6 +6,7 @@ import (
 	"BarcodeQuery/reader"
 	"fmt"
 	"github.com/textileio/go-threads/broadcast"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,6 +21,36 @@ type BarcodeQueryAppImpl struct {
 	QueryCounter      int
 	QueryCounterLimit int
 	DBBroadcast       *broadcast.Broadcaster
+	ClientListener    *broadcast.Listener
+}
+
+func (app *BarcodeQueryAppImpl) handleClientRequest() {
+	for true {
+		request := <-app.ClientListener.Channel()
+
+		msg := request.(model.BarcodeQueryMessage)
+
+		if msg.MessageType == model.CurrentCounterUpdateRequest {
+			app.DBBroadcast.Send(
+				model.BarcodeQueryMessage{
+					MessageType: model.CurrentCounterUpdateResponse,
+					Payload:     app.QueryCounter,
+				})
+		}
+	}
+}
+
+func (app *BarcodeQueryAppImpl) cleanUp() {
+	log.Println("Cleaning up")
+	app.QueryCounter = 0
+	app.ScannedDB.DumpWithTimeStamp()
+
+	app.ErrorDB.DumpWithTimeStamp()
+	app.DuplicatedItemDB.DumpWithTimeStamp()
+
+	app.ScannedDB.Clear()
+	app.ErrorDB.Clear()
+	app.DuplicatedItemDB.Clear()
 }
 
 func (app *BarcodeQueryAppImpl) Run() {
@@ -37,15 +68,16 @@ func (app *BarcodeQueryAppImpl) Run() {
 		run = false
 	}()
 
-	go app.ExistingDB.HandleClientRequest()
+	go app.handleClientRequest()
 	go app.DuplicatedItemDB.HandleClientRequest()
 	go app.ErrorDB.HandleClientRequest()
+	go app.ScannedDB.HandleClientRequest()
 
 	for run {
 		queryString := app.Reader.Read()
-		queryResult := app.ExistingDB.Query(queryString)
+		existingDBResult := app.ExistingDB.Query(queryString)
 
-		if queryResult < 0 {
+		if existingDBResult < 0 {
 			// not found in existing DB
 
 			errorQuery := app.ErrorDB.Query(queryString)
@@ -54,10 +86,11 @@ func (app *BarcodeQueryAppImpl) Run() {
 				app.ErrorDB.Insert(queryString, 0)
 			}
 
-		} else if queryResult == 1 {
+		} else if existingDBResult == 1 {
 			// found barcode
 			// do something
 			app.ScannedDB.Insert(queryString, 0)
+			app.ScannedDB.Query(queryString)
 			app.QueryCounter++
 		} else {
 			// found duplicated query
@@ -69,15 +102,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 		}
 
 		if app.QueryCounter == app.QueryCounterLimit {
-			app.QueryCounter = 0
-			app.ScannedDB.DumpWithTimeStamp()
-
-			app.ErrorDB.DumpWithTimeStamp()
-			app.DuplicatedItemDB.DumpWithTimeStamp()
-
-			app.ScannedDB.Clear()
-			app.ErrorDB.Clear()
-			app.DuplicatedItemDB.Clear()
+			app.cleanUp()
 		}
 
 		app.DBBroadcast.Send(model.BarcodeQueryMessage{
@@ -85,14 +110,8 @@ func (app *BarcodeQueryAppImpl) Run() {
 			Payload:     app.QueryCounter,
 		})
 
-		fmt.Printf("Query result %s : %d \n", queryString, queryResult)
+		fmt.Printf("Query result %s : %d \n", queryString, existingDBResult)
 	}
 
-	defer func() {
-		// Todo: dump these when DBCounter hit limit as well
-		fmt.Println("Cleaning up")
-		app.ScannedDB.DumpWithTimeStamp()
-		app.ErrorDB.DumpWithTimeStamp()
-		app.DuplicatedItemDB.DumpWithTimeStamp()
-	}()
+	defer app.cleanUp()
 }

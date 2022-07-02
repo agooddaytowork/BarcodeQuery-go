@@ -18,8 +18,11 @@ func (handler *ClientHandlerImpl) handleMessageCB(msg model2.BarcodeQueryMessage
 	handler.socket.WriteJSON(msg)
 }
 
-func (handler *ClientHandlerImpl) handle() {
-
+func (handler *ClientHandlerImpl) provideCurrentStateToClient() {
+	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
+		MessageType: model2.DBStateUpdateRequest,
+		Payload:     db.ScannedDB,
+	})
 	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
 		MessageType: model2.DBStateUpdateRequest,
 		Payload:     db.ErrorDBRole,
@@ -29,12 +32,16 @@ func (handler *ClientHandlerImpl) handle() {
 		MessageType: model2.DBStateUpdateRequest,
 		Payload:     db.DuplicatedHistoryDB,
 	})
-
 	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
-		MessageType: model2.DBStateUpdateRequest,
-		Payload:     db.ScannedDB,
+		MessageType: model2.CurrentCounterUpdateRequest,
 	})
+	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
+		MessageType: model2.TotalCounterUpdateRequest,
+	})
+}
 
+func (handler *ClientHandlerImpl) handle() {
+	handler.provideCurrentStateToClient()
 	go func() {
 		for {
 			v := <-handler.dbListener.Channel()
@@ -50,5 +57,8 @@ func (handler *ClientHandlerImpl) handle() {
 		}
 		log.Println(mt, message)
 	}
-	defer handler.socket.Close()
+	defer func() {
+		log.Println("Closing web socket")
+		handler.socket.Close()
+	}()
 }

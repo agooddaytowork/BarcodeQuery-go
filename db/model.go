@@ -7,6 +7,6 @@ type QueryResult struct {
 }
 
 type StateUpdate struct {
-	DBRole DBRole         `json:"db_role"`
-	State  map[string]int `json:"state"`
+	DBRole DBRole        `json:"db_role"`
+	State  []QueryResult `json:"state"`
 }

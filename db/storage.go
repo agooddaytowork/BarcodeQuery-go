@@ -8,4 +8,5 @@ type BarcodeDB interface {
 	Query(input string) int
 	Clear()
 	HandleClientRequest()
+	GetStoreAsQueryResultArray() []QueryResult
 }

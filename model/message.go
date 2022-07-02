@@ -7,6 +7,10 @@ const (
 	CounterNoti
 	DBStateUpdateResponse
 	DBStateUpdateRequest
+	CurrentCounterUpdateRequest
+	CurrentCounterUpdateResponse
+	TotalCounterUpdateRequest
+	TotalCounterUpdateResponse
 )
 
 type BarcodeQueryMessage struct {

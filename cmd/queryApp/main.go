@@ -39,10 +39,11 @@ func main() {
 	}
 
 	scannedDB := db.BarcodeDBHashStorageImpl{
-		DBRole:      db.ScannedDB,
-		FilePath:    "test/scannedDB.txt",
-		Store:       make(map[string]int),
-		DBBroadCast: dbBroadCast,
+		DBRole:         db.ScannedDB,
+		FilePath:       "test/scannedDB.txt",
+		Store:          make(map[string]int),
+		DBBroadCast:    dbBroadCast,
+		ClientListener: clientBroadCast.Listen(),
 	}
 
 	if err != nil {
