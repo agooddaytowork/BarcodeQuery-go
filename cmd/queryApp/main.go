@@ -2,21 +2,28 @@ package main
 
 import (
 	"BarcodeQuery/app"
+	"BarcodeQuery/config"
 	"BarcodeQuery/db"
 	"BarcodeQuery/reader"
 	"BarcodeQuery/web"
+	"flag"
 	"github.com/textileio/go-threads/broadcast"
 	"time"
 )
 
 func main() {
 
+	configPath := flag.String("c", "test/config.json", "Config path")
+	flag.Parse()
+
+	theConfig := config.LoadConfigFromFile(*configPath)
+
 	dbBroadCast := broadcast.NewBroadcaster(100)
 	clientBroadCast := broadcast.NewBroadcaster(100)
 
 	existingDB := db.BarcodeDBHashStorageImpl{
 		DBRole:              db.ExistingDBRole,
-		FilePath:            "test/100k.txt",
+		FilePath:            theConfig.ExistingDBPath,
 		Store:               make(map[string]int),
 		Broadcaster:         dbBroadCast,
 		ClientListener:      clientBroadCast.Listen(),
@@ -26,7 +33,7 @@ func main() {
 
 	errorDB := db.BarcodeDBHashStorageImpl{
 		DBRole:         db.ErrorDBRole,
-		FilePath:       "test/errorDB.txt",
+		FilePath:       theConfig.ErrorDBPath,
 		Store:          make(map[string]int),
 		Broadcaster:    dbBroadCast,
 		ClientListener: clientBroadCast.Listen(),
@@ -34,7 +41,7 @@ func main() {
 
 	duplicatedHistoryDbB := db.BarcodeDBHashStorageImpl{
 		DBRole:         db.DuplicatedHistoryDB,
-		FilePath:       "test/duplicatedDB.txt",
+		FilePath:       theConfig.DuplicatedDBPath,
 		Store:          make(map[string]int),
 		Broadcaster:    dbBroadCast,
 		ClientListener: clientBroadCast.Listen(),
@@ -42,7 +49,7 @@ func main() {
 
 	scannedDB := db.BarcodeDBHashStorageImpl{
 		DBRole:         db.ScannedDB,
-		FilePath:       "test/scannedDB.txt",
+		FilePath:       theConfig.ScannedDBPath,
 		Store:          make(map[string]int),
 		Broadcaster:    dbBroadCast,
 		ClientListener: clientBroadCast.Listen(),
@@ -52,18 +59,26 @@ func main() {
 		panic(err)
 	}
 
-	testFileReader := reader.TestFileReader{
-		Interval: time.Millisecond * 200,
+	// get the reader
+	var theReader reader.BarcodeReader
+	switch theConfig.ReaderType {
+	case "test_file":
+		testFileReader := reader.TestFileReader{
+			Interval: time.Millisecond * 200,
+		}
+		testFileReader.Load(theConfig.ReaderURI)
+		theReader = &testFileReader
+	default:
+		panic("Unsupported reader")
 	}
 
-	testFileReader.Load("test/query")
-
+	// init the program
 	program := app.BarcodeQueryAppImpl{
 		ExistingDB:        &existingDB,
 		ErrorDB:           &errorDB,
 		DuplicatedItemDB:  &duplicatedHistoryDbB,
 		ScannedDB:         &scannedDB,
-		Reader:            &testFileReader,
+		Reader:            theReader,
 		QueryCounter:      0,
 		QueryCounterLimit: 100,
 		Broadcaster:       dbBroadCast,
