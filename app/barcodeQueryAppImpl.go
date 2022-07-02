@@ -102,6 +102,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 				app.ErrorDB.Insert(queryString, 0)
 			}
 			go app.Actuator.SetErrorActuatorState(actuator.OnState)
+			go app.sendResponse(model.SetErrorActuatorResponse, actuator.OnState)
 
 		} else if existingDBResult == 1 {
 			// found barcode
@@ -118,6 +119,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 				app.DuplicatedItemDB.Insert(queryString, 0)
 			}
 			go app.Actuator.SetDuplicateActuatorState(actuator.OnState)
+			go app.sendResponse(model.SetDuplicateActororResponse, actuator.OnState)
 		}
 
 		if app.QueryCounter == app.QueryCounterLimit {
