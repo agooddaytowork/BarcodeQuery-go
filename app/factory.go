@@ -4,6 +4,7 @@ import (
 	"BarcodeQuery/actuator"
 	"BarcodeQuery/db"
 	"BarcodeQuery/reader"
+	"fmt"
 	"github.com/textileio/go-threads/broadcast"
 	"time"
 )
@@ -50,17 +51,17 @@ func GetBarcodeQueryAppImpl(theConfig BarcodeAppConfig, dbBroadCast *broadcast.B
 	// get the reader
 	var theReader reader.BarcodeReader
 	switch theConfig.ReaderType {
-	case "test_file":
+	case TestFileReader:
 		testFileReader := reader.TestFileReader{
 			Interval: time.Millisecond * 200,
 		}
 		testFileReader.Load(theConfig.ReaderURI)
 		theReader = &testFileReader
 
-	case "console":
+	case ConsoleReader:
 		theReader = &reader.ConsoleReader{}
 	default:
-		panic("Unsupported reader, only support test_file/console")
+		panic(fmt.Sprintf("Unsupported reader, only support %s/%s", TestFileReader, ConsoleReader))
 	}
 
 	// init the program
