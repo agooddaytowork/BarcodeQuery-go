@@ -13,7 +13,7 @@ type BarcodeDBHashStorageImpl struct {
 	DBRole              DBRole
 	FilePath            string
 	Store               map[string]int
-	DBBroadCast         *broadcast.Broadcaster
+	Broadcaster         *broadcast.Broadcaster
 	ClientListener      *broadcast.Listener
 	IgnoreClientRequest bool
 }
@@ -38,7 +38,7 @@ func (db *BarcodeDBHashStorageImpl) HandleClientRequest() {
 		msg := request.(model.BarcodeQueryMessage)
 		if msg.MessageType == model.DBStateUpdateRequest && len(db.Store) != 0 {
 			if msg.Payload.(DBRole) == db.DBRole {
-				db.DBBroadCast.Send(
+				db.Broadcaster.Send(
 					model.BarcodeQueryMessage{
 						MessageType: model.DBStateUpdateResponse,
 						Payload: StateUpdate{
@@ -133,7 +133,7 @@ func (db *BarcodeDBHashStorageImpl) Query(input string) int {
 	if queriedNumber, ok := db.Store[input]; ok {
 		newQueriedNumber := queriedNumber + 1
 		db.Store[input] = newQueriedNumber
-		db.DBBroadCast.Send(model.BarcodeQueryMessage{
+		db.Broadcaster.Send(model.BarcodeQueryMessage{
 			MessageType: model.DBQueryNoti,
 			Payload: QueryResult{
 				DBRole:      db.DBRole,
@@ -144,7 +144,7 @@ func (db *BarcodeDBHashStorageImpl) Query(input string) int {
 		return newQueriedNumber
 	}
 
-	db.DBBroadCast.Send(model.BarcodeQueryMessage{
+	db.Broadcaster.Send(model.BarcodeQueryMessage{
 		MessageType: model.DBQueryNoti,
 		Payload: QueryResult{
 			DBRole:      db.DBRole,

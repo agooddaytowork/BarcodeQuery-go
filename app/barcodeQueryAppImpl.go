@@ -20,7 +20,7 @@ type BarcodeQueryAppImpl struct {
 	Reader            reader.BarcodeReader
 	QueryCounter      int
 	QueryCounterLimit int
-	DBBroadcast       *broadcast.Broadcaster
+	Broadcaster       *broadcast.Broadcaster
 	ClientListener    *broadcast.Listener
 }
 
@@ -31,7 +31,7 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 		msg := request.(model.BarcodeQueryMessage)
 
 		if msg.MessageType == model.CurrentCounterUpdateRequest {
-			app.DBBroadcast.Send(
+			app.Broadcaster.Send(
 				model.BarcodeQueryMessage{
 					MessageType: model.CurrentCounterUpdateResponse,
 					Payload:     app.QueryCounter,
@@ -105,7 +105,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 			app.cleanUp()
 		}
 
-		app.DBBroadcast.Send(model.BarcodeQueryMessage{
+		app.Broadcaster.Send(model.BarcodeQueryMessage{
 			MessageType: model.CounterNoti,
 			Payload:     app.QueryCounter,
 		})

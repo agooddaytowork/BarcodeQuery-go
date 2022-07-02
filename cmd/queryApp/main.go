@@ -14,11 +14,12 @@ func main() {
 	clientBroadCast := broadcast.NewBroadcaster(100)
 
 	existingDB := db.BarcodeDBHashStorageImpl{
-		DBRole:         db.ExistingDBRole,
-		FilePath:       "test/100k.txt",
-		Store:          make(map[string]int),
-		DBBroadCast:    dbBroadCast,
-		ClientListener: clientBroadCast.Listen(),
+		DBRole:              db.ExistingDBRole,
+		FilePath:            "test/100k.txt",
+		Store:               make(map[string]int),
+		Broadcaster:         dbBroadCast,
+		ClientListener:      clientBroadCast.Listen(),
+		IgnoreClientRequest: true,
 	}
 	err := existingDB.Load()
 
@@ -26,7 +27,7 @@ func main() {
 		DBRole:         db.ErrorDBRole,
 		FilePath:       "test/errorDB.txt",
 		Store:          make(map[string]int),
-		DBBroadCast:    dbBroadCast,
+		Broadcaster:    dbBroadCast,
 		ClientListener: clientBroadCast.Listen(),
 	}
 
@@ -34,7 +35,7 @@ func main() {
 		DBRole:         db.DuplicatedHistoryDB,
 		FilePath:       "test/duplicatedDB.txt",
 		Store:          make(map[string]int),
-		DBBroadCast:    dbBroadCast,
+		Broadcaster:    dbBroadCast,
 		ClientListener: clientBroadCast.Listen(),
 	}
 
@@ -42,7 +43,7 @@ func main() {
 		DBRole:         db.ScannedDB,
 		FilePath:       "test/scannedDB.txt",
 		Store:          make(map[string]int),
-		DBBroadCast:    dbBroadCast,
+		Broadcaster:    dbBroadCast,
 		ClientListener: clientBroadCast.Listen(),
 	}
 
@@ -57,13 +58,14 @@ func main() {
 		Reader:            &reader.ConsoleReader{},
 		QueryCounter:      0,
 		QueryCounterLimit: 10,
-		DBBroadcast:       dbBroadCast,
+		Broadcaster:       dbBroadCast,
+		ClientListener:    clientBroadCast.Listen(),
 	}
 
 	go program.Run()
 
 	theWeb := web.BarcodeQueryWebImpl{
-		DBBroadcast:     dbBroadCast,
+		Broadcaster:     dbBroadCast,
 		ClientBroadCast: clientBroadCast,
 	}
 
