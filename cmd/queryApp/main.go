@@ -6,6 +6,7 @@ import (
 	"BarcodeQuery/reader"
 	"BarcodeQuery/web"
 	"github.com/textileio/go-threads/broadcast"
+	"time"
 )
 
 func main() {
@@ -50,25 +51,31 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	testFileReader := reader.TestFileReader{
+		Interval: time.Millisecond * 200,
+	}
+
+	testFileReader.Load("test/query")
+
 	program := app.BarcodeQueryAppImpl{
 		ExistingDB:        &existingDB,
 		ErrorDB:           &errorDB,
 		DuplicatedItemDB:  &duplicatedHistoryDbB,
 		ScannedDB:         &scannedDB,
-		Reader:            &reader.ConsoleReader{},
+		Reader:            &testFileReader,
 		QueryCounter:      0,
-		QueryCounterLimit: 10,
+		QueryCounterLimit: 100,
 		Broadcaster:       dbBroadCast,
 		ClientListener:    clientBroadCast.Listen(),
 	}
-
-	go program.Run()
 
 	theWeb := web.BarcodeQueryWebImpl{
 		Broadcaster:     dbBroadCast,
 		ClientBroadCast: clientBroadCast,
 	}
 
-	theWeb.Run()
+	go theWeb.Run()
+	program.Run()
 
 }
