@@ -1,6 +1,7 @@
 package app
 
 import (
+	"BarcodeQuery/actuator"
 	"BarcodeQuery/db"
 	"BarcodeQuery/reader"
 	"github.com/textileio/go-threads/broadcast"
@@ -74,6 +75,7 @@ func GetBarcodeQueryAppImpl(theConfig BarcodeAppConfig, dbBroadCast *broadcast.B
 		TotalCounter:      0,
 		Broadcaster:       dbBroadCast,
 		ClientListener:    clientBroadCast.Listen(),
+		Actuator:          &actuator.ConsoleActuator{},
 	}
 
 }

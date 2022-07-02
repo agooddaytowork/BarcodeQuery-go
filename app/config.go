@@ -13,6 +13,8 @@ type BarcodeAppConfig struct {
 	ReaderType        string `json:"reader_type"`
 	ReaderURI         string `json:"reader_uri"`
 	QueryCounterLimit int    `json:"query_counter_limit"`
+	EnableActuator    bool   `json:"enable_actuator"`
+	AutoResetActuator bool   `json:"auto_reset_actuator"`
 }
 
 func LoadConfigFromFile(filePath string) BarcodeAppConfig {

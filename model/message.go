@@ -10,6 +10,10 @@ const (
 	CurrentCounterUpdateResponse
 	TotalCounterUpdateRequest
 	TotalCounterUpdateResponse
+	SetDuplicateActuatorRequest
+	SetDuplicateActororResponse
+	SetErrorActuatorRequest
+	SetErrorActuatorResponse
 )
 
 type BarcodeQueryMessage struct {
