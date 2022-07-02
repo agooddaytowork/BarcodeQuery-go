@@ -20,6 +20,7 @@ type BarcodeQueryAppImpl struct {
 	Reader            reader.BarcodeReader
 	QueryCounter      int
 	QueryCounterLimit int
+	TotalCounter      int
 	Broadcaster       *broadcast.Broadcaster
 	ClientListener    *broadcast.Listener
 }
@@ -92,6 +93,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 			app.ScannedDB.Insert(queryString, 0)
 			app.ScannedDB.Query(queryString)
 			app.QueryCounter++
+			app.TotalCounter++
 		} else {
 			// found duplicated query
 			duplicateQuery := app.DuplicatedItemDB.Query(queryString)
@@ -106,10 +108,13 @@ func (app *BarcodeQueryAppImpl) Run() {
 		}
 
 		app.Broadcaster.Send(model.BarcodeQueryMessage{
-			MessageType: model.CounterNoti,
+			MessageType: model.CurrentCounterUpdateResponse,
 			Payload:     app.QueryCounter,
 		})
-
+		app.Broadcaster.Send(model.BarcodeQueryMessage{
+			MessageType: model.TotalCounterUpdateResponse,
+			Payload:     app.TotalCounter,
+		})
 		fmt.Printf("Query result %s : %d \n", queryString, existingDBResult)
 	}
 

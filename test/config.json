@@ -4,5 +4,6 @@
   "scanned_db_path": "local/scanned.txt",
   "duplicated_db_path": "local/duplicated.txt",
   "reader_type": "test_file",
-  "reader_uri": "test/query"
+  "reader_uri": "test/query",
+  "query_counter_limit": 100
 }

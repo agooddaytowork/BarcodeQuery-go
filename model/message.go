@@ -4,7 +4,6 @@ type MessageType int16
 
 const (
 	DBQueryNoti MessageType = iota
-	CounterNoti
 	DBStateUpdateResponse
 	DBStateUpdateRequest
 	CurrentCounterUpdateRequest
