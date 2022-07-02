@@ -15,6 +15,7 @@ type BarcodeAppConfig struct {
 	QueryCounterLimit int    `json:"query_counter_limit"`
 	EnableActuator    bool   `json:"enable_actuator"`
 	AutoResetActuator bool   `json:"auto_reset_actuator"`
+	WebStaticFilePath string `json:"web_static_file_path"`
 }
 
 func LoadConfigFromFile(filePath string) BarcodeAppConfig {

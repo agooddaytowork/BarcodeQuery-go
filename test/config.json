@@ -6,5 +6,6 @@
   "reader_type": "test_file",
   "reader_uri": "test/query",
   "query_counter_limit": 100,
-  "enable_actuator": false
+  "enable_actuator": false,
+  "web_static_file_path": "local/web"
 }

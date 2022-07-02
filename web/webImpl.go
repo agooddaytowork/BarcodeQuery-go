@@ -10,9 +10,12 @@ import (
 type BarcodeQueryWebImpl struct {
 	Broadcaster     *broadcast.Broadcaster
 	ClientBroadCast *broadcast.Broadcaster
+	StaticFilePath  string
 }
 
 func (web *BarcodeQueryWebImpl) Run() {
+	fs := http.FileServer(http.Dir(web.StaticFilePath))
+	http.Handle("/", fs)
 	http.HandleFunc("/ws", web.barcodeWS)
 	http.ListenAndServe(":80", nil)
 }
