@@ -27,7 +27,6 @@ func (handler *ClientHandlerImpl) provideCurrentStateToClient() {
 		MessageType: model2.DBStateUpdateRequest,
 		Payload:     db.ErrorDBRole,
 	})
-
 	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
 		MessageType: model2.DBStateUpdateRequest,
 		Payload:     db.DuplicatedHistoryDB,

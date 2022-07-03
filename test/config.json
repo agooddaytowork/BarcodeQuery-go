@@ -3,7 +3,7 @@
   "error_db_path": "local/error.txt",
   "scanned_db_path": "local/scanned.txt",
   "duplicated_db_path": "local/duplicated.txt",
-  "reader_type": "test_file",
+  "reader_type": "console",
   "reader_uri": "test/query",
   "query_counter_limit": 100,
   "enable_actuator": false,
