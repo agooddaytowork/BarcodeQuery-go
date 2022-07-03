@@ -54,6 +54,12 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 			state := actuator.GetState(msg.Payload.(bool))
 			app.Actuator.SetDuplicateActuatorState(state)
 			app.sendResponse(model.SetDuplicateActororResponse, state)
+		case model.SetCurrentCounterLimitRequest:
+			app.QueryCounterLimit = msg.Payload.(int)
+			app.sendResponse(model.SetCurrentCounterLimitResponse, msg.Payload.(int))
+		case model.ResetRequest:
+			// todo: handle reset request
+			app.sendResponse(model.ResetResponse, "ok")
 		}
 
 	}
