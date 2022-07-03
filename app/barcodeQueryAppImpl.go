@@ -47,12 +47,12 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 		case model.TotalCounterUpdateRequest:
 			app.sendResponse(model.TotalCounterUpdateResponse, app.TotalCounter)
 		case model.SetErrorActuatorRequest:
-			state := msg.Payload.(actuator.ActuatorState)
+			state := actuator.GetState(msg.Payload.(bool))
 			app.Actuator.SetErrorActuatorState(state)
 			app.sendResponse(model.SetErrorActuatorResponse, state)
 		case model.SetDuplicateActuatorRequest:
-			state := msg.Payload.(actuator.ActuatorState)
-			app.Actuator.SetDuplicateActuatorState(msg.Payload.(actuator.ActuatorState))
+			state := actuator.GetState(msg.Payload.(bool))
+			app.Actuator.SetDuplicateActuatorState(state)
 			app.sendResponse(model.SetDuplicateActororResponse, state)
 		}
 

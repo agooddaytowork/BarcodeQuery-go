@@ -3,6 +3,7 @@ package web
 import (
 	"BarcodeQuery/db"
 	model2 "BarcodeQuery/model"
+	"encoding/json"
 	"github.com/gorilla/websocket"
 	"github.com/textileio/go-threads/broadcast"
 	"log"
@@ -16,6 +17,13 @@ type ClientHandlerImpl struct {
 
 func (handler *ClientHandlerImpl) handleMessageCB(msg model2.BarcodeQueryMessage) {
 	handler.socket.WriteJSON(msg)
+}
+
+func (handler *ClientHandlerImpl) handleClientRequest(msg []byte) {
+
+	var barcodeQueryMsg model2.BarcodeQueryMessage
+	json.Unmarshal(msg, &barcodeQueryMsg)
+	handler.clientBroadcast.Send(barcodeQueryMsg)
 }
 
 func (handler *ClientHandlerImpl) provideCurrentStateToClient() {
@@ -54,7 +62,8 @@ func (handler *ClientHandlerImpl) handle() {
 			log.Println("read:", err)
 			break
 		}
-		log.Println(mt, message)
+		handler.handleClientRequest(message)
+		log.Println(mt, string(message))
 	}
 	defer func() {
 		log.Println("Closing web socket")

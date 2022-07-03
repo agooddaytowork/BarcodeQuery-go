@@ -2,6 +2,14 @@ package actuator
 
 type ActuatorState bool
 
+func GetState(state bool) ActuatorState {
+	if state {
+		return OnState
+	}
+
+	return Offstate
+}
+
 const (
 	OnState  ActuatorState = true
 	Offstate ActuatorState = false
