@@ -60,8 +60,15 @@ func GetBarcodeQueryAppImpl(theConfig BarcodeAppConfig, dbBroadCast *broadcast.B
 
 	case ConsoleReader:
 		theReader = &reader.ConsoleReader{}
+
+	case TCPReader:
+		theReader = &reader.TCPReader{
+			URL:           theConfig.ReaderURI,
+			SpawnedThread: false,
+			ReportChannel: make(chan string, 1000),
+		}
 	default:
-		panic(fmt.Sprintf("Unsupported reader, only support %s/%s", TestFileReader, ConsoleReader))
+		panic(fmt.Sprintf("Unsupported reader, only support %s/%s/%s", TestFileReader, ConsoleReader, TCPReader))
 	}
 
 	// init the program

@@ -9,7 +9,7 @@ import (
 
 func main() {
 
-	configPath := flag.String("c", "test/config.json", "Config path")
+	configPath := flag.String("c", "test/config2.json", "Config path")
 	flag.Parse()
 
 	theConfig := app.LoadConfigFromFile(*configPath)

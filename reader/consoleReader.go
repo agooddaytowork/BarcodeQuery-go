@@ -2,7 +2,7 @@ package reader
 
 import (
 	"bufio"
-	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -11,7 +11,7 @@ type ConsoleReader struct {
 }
 
 func (r *ConsoleReader) Read() string {
-	fmt.Println("Please input a query: ")
+	log.Println("Please input a query: ")
 	reader := bufio.NewReader(os.Stdin)
 
 	text, _ := reader.ReadString('\n')

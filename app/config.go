@@ -10,6 +10,7 @@ type ReaderType string
 const (
 	TestFileReader ReaderType = "test_file"
 	ConsoleReader  ReaderType = "console"
+	TCPReader      ReaderType = "tcp_reader"
 )
 
 type BarcodeAppConfig struct {

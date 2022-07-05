@@ -1,0 +1,11 @@
+{
+  "existing_db_path": "test/100k.txt",
+  "error_db_path": "local/error.txt",
+  "scanned_db_path": "local/scanned.txt",
+  "duplicated_db_path": "local/duplicated.txt",
+  "reader_type": "tcp_reader",
+  "reader_uri": "localhost:49214",
+  "query_counter_limit": 100,
+  "enable_actuator": false,
+  "web_static_file_path": "local/web"
+}
