@@ -4,6 +4,7 @@ import (
 	"BarcodeQuery/model"
 	"fmt"
 	"github.com/textileio/go-threads/broadcast"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -56,7 +57,7 @@ func (db *BarcodeDBHashStorageImpl) Load() *BarcodeDBError {
 	data, err := os.ReadFile(db.FilePath)
 
 	if err != nil {
-
+		panic(err)
 		return &BarcodeDBError{
 			ExceptionMsg: err.Error(),
 		}
@@ -66,9 +67,10 @@ func (db *BarcodeDBHashStorageImpl) Load() *BarcodeDBError {
 
 	newStorage := make(map[string]int)
 	for _, e := range elements {
-		newStorage[strings.Trim(e, " ")] = 0
+		newStorage[strings.Trim(e, " \r\t")] = 0
 	}
 
+	log.Printf("LOAD %d items from %s \n", len(newStorage), db.FilePath)
 	db.Store = newStorage
 	return nil
 }
@@ -80,9 +82,7 @@ func (db *BarcodeDBHashStorageImpl) dump(inputPath string) *BarcodeDBError {
 
 	f, err := os.Create(inputPath)
 	if err != nil {
-		return &BarcodeDBError{
-			ExceptionMsg: err.Error(),
-		}
+		panic(err)
 	}
 
 	for key := range db.Store {

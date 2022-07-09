@@ -31,5 +31,5 @@ func (r *TestFileReader) Read() string {
 	if r.Index > len(r.Store)-1 {
 		r.Index = 0
 	}
-	return strings.Trim(r.Store[r.Index], " ")
+	return strings.Trim(r.Store[r.Index], " \r")
 }
