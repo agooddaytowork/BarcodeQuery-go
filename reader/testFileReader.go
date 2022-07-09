@@ -1,6 +1,7 @@
 package reader
 
 import (
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -29,7 +30,8 @@ func (r *TestFileReader) Read() string {
 	r.Index++
 
 	if r.Index > len(r.Store)-1 {
-		r.Index = 0
+		log.Println("Đã đọc hết test file, thoát chương trình")
+		os.Exit(0)
 	}
 	return strings.Trim(r.Store[r.Index], " \r")
 }

@@ -13,17 +13,18 @@ import (
 )
 
 type BarcodeQueryAppImpl struct {
-	ExistingDB        db.BarcodeDB
-	DuplicatedItemDB  db.BarcodeDB
-	ErrorDB           db.BarcodeDB
-	ScannedDB         db.BarcodeDB
-	Reader            reader.BarcodeReader
-	QueryCounter      int
-	QueryCounterLimit int
-	TotalCounter      int
-	Broadcaster       *broadcast.Broadcaster
-	ClientListener    *broadcast.Listener
-	Actuator          actuator.BarcodeActuator
+	ExistingDB               db.BarcodeDB
+	DuplicatedItemDB         db.BarcodeDB
+	ErrorDB                  db.BarcodeDB
+	ScannedDB                db.BarcodeDB
+	Reader                   reader.BarcodeReader
+	QueryCounter             int
+	QueryCounterLimit        int
+	TotalCounter             int
+	NumberOfItemInExistingDB int
+	Broadcaster              *broadcast.Broadcaster
+	ClientListener           *broadcast.Listener
+	Actuator                 actuator.BarcodeActuator
 }
 
 func (app *BarcodeQueryAppImpl) sendResponse(msgType model.MessageType, payload any) {
@@ -57,9 +58,11 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 		case model.SetCurrentCounterLimitRequest:
 			app.QueryCounterLimit = msg.Payload.(int)
 			app.sendResponse(model.SetCurrentCounterLimitResponse, msg.Payload.(int))
-		case model.ResetRequest:
+		case model.ResetAppRequest:
 			// todo: handle reset request
-			app.sendResponse(model.ResetResponse, "ok")
+			app.sendResponse(model.RestAppResponse, "ok")
+		case model.GetNumberOfItemInListRequest:
+			app.sendResponse(model.GetNumberOfItemInListResponse, app.NumberOfItemInExistingDB)
 		}
 
 	}
@@ -77,7 +80,7 @@ func (app *BarcodeQueryAppImpl) cleanUp() {
 }
 
 func (app *BarcodeQueryAppImpl) Run() {
-
+	app.NumberOfItemInExistingDB = app.ExistingDB.GetDBLength()
 	run := true
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc,

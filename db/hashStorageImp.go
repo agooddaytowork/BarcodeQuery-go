@@ -158,3 +158,7 @@ func (db *BarcodeDBHashStorageImpl) Query(input string) int {
 func (db *BarcodeDBHashStorageImpl) Clear() {
 	db.Store = make(map[string]int)
 }
+
+func (db *BarcodeDBHashStorageImpl) GetDBLength() int {
+	return len(db.Store)
+}

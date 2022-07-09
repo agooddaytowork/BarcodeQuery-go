@@ -9,4 +9,5 @@ type BarcodeDB interface {
 	Clear()
 	HandleClientRequest()
 	GetStoreAsQueryResultArray() []QueryResult
+	GetDBLength() int
 }

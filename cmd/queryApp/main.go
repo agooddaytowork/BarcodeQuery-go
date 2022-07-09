@@ -9,7 +9,7 @@ import (
 
 func main() {
 
-	configPath := flag.String("c", "C:\\Users\\tam\\Workspace\\BarcodeQuery-go\\target\\config.json", "Config path")
+	configPath := flag.String("c", "test/config.json", "Config path")
 	flag.Parse()
 
 	theConfig := app.LoadConfigFromFile(*configPath)

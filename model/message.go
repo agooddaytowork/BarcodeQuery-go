@@ -14,10 +14,12 @@ const (
 	SetDuplicateActororResponse
 	SetErrorActuatorRequest
 	SetErrorActuatorResponse
-	ResetRequest
-	ResetResponse
+	ResetAppRequest
+	RestAppResponse
 	SetCurrentCounterLimitRequest
 	SetCurrentCounterLimitResponse
+	GetNumberOfItemInListRequest
+	GetNumberOfItemInListResponse
 )
 
 type BarcodeQueryMessage struct {

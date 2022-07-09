@@ -45,6 +45,9 @@ func (handler *ClientHandlerImpl) provideCurrentStateToClient() {
 	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
 		MessageType: model2.TotalCounterUpdateRequest,
 	})
+	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
+		MessageType: model2.GetNumberOfItemInListRequest,
+	})
 }
 
 func (handler *ClientHandlerImpl) handle() {
