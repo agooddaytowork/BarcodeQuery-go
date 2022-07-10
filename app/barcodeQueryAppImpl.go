@@ -19,6 +19,7 @@ type BarcodeQueryAppImpl struct {
 	Broadcaster      *broadcast.Broadcaster
 	ClientListener   *broadcast.Listener
 	Actuator         actuator.BarcodeActuator
+	Config           BarcodeAppConfig
 }
 
 func (app *BarcodeQueryAppImpl) sendResponse(msgType model.MessageType, payload any) {
@@ -59,6 +60,11 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 			app.sendResponse(model.GetNumberOfItemInListResponse, app.CounterReport.NumberOfItemInExistingDB)
 		case model.CounterReportRequest:
 			app.sendResponse(model.CounterReportResponse, app.CounterReport)
+		case model.GetConfigRequest:
+			app.sendResponse(model.GetConfigResponse, app.Config)
+		case model.SetConfigRequest:
+			app.Config = msg.Payload.(BarcodeAppConfig)
+			app.sendResponse(model.SetConfigResponse, 1)
 		}
 
 	}

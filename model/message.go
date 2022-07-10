@@ -24,6 +24,10 @@ const (
 	ResetAllCountersResponse
 	CounterReportRequest
 	CounterReportResponse
+	GetConfigRequest
+	GetConfigResponse
+	SetConfigRequest
+	SetConfigResponse
 )
 
 type BarcodeQueryMessage struct {

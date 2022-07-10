@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func GetBarcodeQueryAppImpl(theConfig BarcodeAppConfig, dbBroadCast *broadcast.Broadcaster, clientBroadCast *broadcast.Broadcaster) BarcodeQueryAppImpl {
+func GetBarcodeQueryAppImpl(theConfig BarcodeAppConfig, dbBroadCast *broadcast.Broadcaster, clientBroadCast *broadcast.Broadcaster, config BarcodeAppConfig) BarcodeQueryAppImpl {
 	existingDB := db.BarcodeDBHashStorageImpl{
 		DBRole:              db.ExistingDBRole,
 		FilePath:            theConfig.ExistingDBPath,
@@ -89,6 +89,7 @@ func GetBarcodeQueryAppImpl(theConfig BarcodeAppConfig, dbBroadCast *broadcast.B
 		Broadcaster:    dbBroadCast,
 		ClientListener: clientBroadCast.Listen(),
 		Actuator:       &actuator.ConsoleActuator{},
+		Config:         config,
 	}
 
 }
