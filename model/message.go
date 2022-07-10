@@ -22,6 +22,8 @@ const (
 	GetNumberOfItemInListResponse
 	ResetAllCountersRequest
 	ResetAllCountersResponse
+	CounterReportRequest
+	CounterReportResponse
 )
 
 type BarcodeQueryMessage struct {

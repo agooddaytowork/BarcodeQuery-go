@@ -3,6 +3,7 @@ package app
 import (
 	"BarcodeQuery/actuator"
 	"BarcodeQuery/db"
+	"BarcodeQuery/model"
 	"BarcodeQuery/reader"
 	"fmt"
 	"github.com/textileio/go-threads/broadcast"
@@ -73,17 +74,21 @@ func GetBarcodeQueryAppImpl(theConfig BarcodeAppConfig, dbBroadCast *broadcast.B
 
 	// init the program
 	return BarcodeQueryAppImpl{
-		ExistingDB:        &existingDB,
-		ErrorDB:           &errorDB,
-		DuplicatedItemDB:  &duplicatedHistoryDbB,
-		ScannedDB:         &scannedDB,
-		Reader:            theReader,
-		QueryCounter:      0,
-		QueryCounterLimit: theConfig.QueryCounterLimit,
-		TotalCounter:      0,
-		Broadcaster:       dbBroadCast,
-		ClientListener:    clientBroadCast.Listen(),
-		Actuator:          &actuator.ConsoleActuator{},
+		ExistingDB:       &existingDB,
+		ErrorDB:          &errorDB,
+		DuplicatedItemDB: &duplicatedHistoryDbB,
+		ScannedDB:        &scannedDB,
+		Reader:           theReader,
+		CounterReport: model.CounterReport{
+			QueryCounter:             0,
+			QueryCounterLimit:        theConfig.QueryCounterLimit,
+			TotalCounter:             0,
+			PackageCounter:           0,
+			NumberOfItemInExistingDB: 0,
+		},
+		Broadcaster:    dbBroadCast,
+		ClientListener: clientBroadCast.Listen(),
+		Actuator:       &actuator.ConsoleActuator{},
 	}
 
 }

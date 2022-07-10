@@ -39,14 +39,18 @@ func (handler *ClientHandlerImpl) provideCurrentStateToClient() {
 		MessageType: model2.DBStateUpdateRequest,
 		Payload:     db.DuplicatedHistoryDB,
 	})
+	//handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
+	//	MessageType: model2.CurrentCounterUpdateRequest,
+	//})
+	//handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
+	//	MessageType: model2.TotalCounterUpdateRequest,
+	//})
+	//handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
+	//	MessageType: model2.GetNumberOfItemInListRequest,
+	//})
+
 	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
-		MessageType: model2.CurrentCounterUpdateRequest,
-	})
-	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
-		MessageType: model2.TotalCounterUpdateRequest,
-	})
-	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
-		MessageType: model2.GetNumberOfItemInListRequest,
+		MessageType: model2.CounterReportRequest,
 	})
 }
 

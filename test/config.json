@@ -5,7 +5,7 @@
   "duplicated_db_path": "local/duplicated.txt",
   "reader_type": "test_file",
   "reader_uri": "test/query",
-  "query_counter_limit": 100,
+  "query_counter_limit": 50,
   "enable_actuator": false,
   "web_static_file_path": "local/web"
 }

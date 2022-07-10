@@ -10,18 +10,15 @@ import (
 )
 
 type BarcodeQueryAppImpl struct {
-	ExistingDB               db.BarcodeDB
-	DuplicatedItemDB         db.BarcodeDB
-	ErrorDB                  db.BarcodeDB
-	ScannedDB                db.BarcodeDB
-	Reader                   reader.BarcodeReader
-	QueryCounter             int
-	QueryCounterLimit        int
-	TotalCounter             int
-	NumberOfItemInExistingDB int
-	Broadcaster              *broadcast.Broadcaster
-	ClientListener           *broadcast.Listener
-	Actuator                 actuator.BarcodeActuator
+	ExistingDB       db.BarcodeDB
+	DuplicatedItemDB db.BarcodeDB
+	ErrorDB          db.BarcodeDB
+	ScannedDB        db.BarcodeDB
+	Reader           reader.BarcodeReader
+	CounterReport    model.CounterReport
+	Broadcaster      *broadcast.Broadcaster
+	ClientListener   *broadcast.Listener
+	Actuator         actuator.BarcodeActuator
 }
 
 func (app *BarcodeQueryAppImpl) sendResponse(msgType model.MessageType, payload any) {
@@ -41,9 +38,9 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 		switch msg.MessageType {
 
 		case model.CurrentCounterUpdateRequest:
-			app.sendResponse(model.CurrentCounterUpdateResponse, app.QueryCounter)
+			app.sendResponse(model.CurrentCounterUpdateResponse, app.CounterReport.QueryCounter)
 		case model.TotalCounterUpdateRequest:
-			app.sendResponse(model.TotalCounterUpdateResponse, app.TotalCounter)
+			app.sendResponse(model.TotalCounterUpdateResponse, app.CounterReport.TotalCounter)
 		case model.SetErrorActuatorRequest:
 			state := actuator.GetState(msg.Payload.(bool))
 			app.Actuator.SetErrorActuatorState(state)
@@ -53,13 +50,15 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 			app.Actuator.SetDuplicateActuatorState(state)
 			app.sendResponse(model.SetDuplicateActuatorResponse, state)
 		case model.SetCurrentCounterLimitRequest:
-			app.QueryCounterLimit = msg.Payload.(int)
+			app.CounterReport.QueryCounterLimit = msg.Payload.(int)
 			app.sendResponse(model.SetCurrentCounterLimitResponse, msg.Payload.(int))
 		case model.ResetAppRequest:
 			// todo: handle reset request
 			app.sendResponse(model.RestAppResponse, "ok")
 		case model.GetNumberOfItemInListRequest:
-			app.sendResponse(model.GetNumberOfItemInListResponse, app.NumberOfItemInExistingDB)
+			app.sendResponse(model.GetNumberOfItemInListResponse, app.CounterReport.NumberOfItemInExistingDB)
+		case model.CounterReportRequest:
+			app.sendResponse(model.CounterReportResponse, app.CounterReport)
 		}
 
 	}
@@ -68,7 +67,7 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 func (app *BarcodeQueryAppImpl) cleanUp() {
 	log.Println("Cleaning up")
 	app.sendResponse(model.ResetAllCountersResponse, 0)
-	app.QueryCounter = 0
+	app.CounterReport.QueryCounter = 0
 	app.ScannedDB.DumpWithTimeStamp()
 	app.ErrorDB.DumpWithTimeStamp()
 	app.DuplicatedItemDB.DumpWithTimeStamp()
@@ -78,7 +77,7 @@ func (app *BarcodeQueryAppImpl) cleanUp() {
 }
 
 func (app *BarcodeQueryAppImpl) Run() {
-	app.NumberOfItemInExistingDB = app.ExistingDB.GetDBLength()
+	app.CounterReport.NumberOfItemInExistingDB = app.ExistingDB.GetDBLength()
 	run := true
 
 	go app.handleClientRequest()
@@ -105,8 +104,8 @@ func (app *BarcodeQueryAppImpl) Run() {
 			// do something
 			app.ScannedDB.Insert(queryString, 0)
 			app.ScannedDB.Query(queryString)
-			app.QueryCounter++
-			app.TotalCounter++
+			app.CounterReport.QueryCounter++
+			app.CounterReport.TotalCounter++
 		} else {
 			// found duplicated query
 			duplicateQuery := app.DuplicatedItemDB.Query(queryString)
@@ -118,11 +117,11 @@ func (app *BarcodeQueryAppImpl) Run() {
 			go app.sendResponse(model.SetDuplicateActuatorResponse, actuator.OnState)
 		}
 
-		app.sendResponse(model.CurrentCounterUpdateResponse, app.QueryCounter)
-		app.sendResponse(model.TotalCounterUpdateResponse, app.TotalCounter)
-		if app.QueryCounter == app.QueryCounterLimit {
+		if app.CounterReport.QueryCounter == app.CounterReport.QueryCounterLimit {
+			app.CounterReport.PackageCounter++
 			app.cleanUp()
 		}
+		app.sendResponse(model.CounterReportResponse, app.CounterReport)
 
 		log.Printf("Query result %s : %d \n", queryString, existingDBResult)
 	}
