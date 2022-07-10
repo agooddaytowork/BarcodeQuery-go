@@ -11,7 +11,7 @@ const (
 	TotalCounterUpdateRequest
 	TotalCounterUpdateResponse
 	SetDuplicateActuatorRequest
-	SetDuplicateActororResponse
+	SetDuplicateActuatorResponse
 	SetErrorActuatorRequest
 	SetErrorActuatorResponse
 	ResetAppRequest
@@ -20,6 +20,8 @@ const (
 	SetCurrentCounterLimitResponse
 	GetNumberOfItemInListRequest
 	GetNumberOfItemInListResponse
+	ResetAllCountersRequest
+	ResetAllCountersResponse
 )
 
 type BarcodeQueryMessage struct {

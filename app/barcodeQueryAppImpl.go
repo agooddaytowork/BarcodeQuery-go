@@ -7,9 +7,6 @@ import (
 	"BarcodeQuery/reader"
 	"github.com/textileio/go-threads/broadcast"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 type BarcodeQueryAppImpl struct {
@@ -54,7 +51,7 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 		case model.SetDuplicateActuatorRequest:
 			state := actuator.GetState(msg.Payload.(bool))
 			app.Actuator.SetDuplicateActuatorState(state)
-			app.sendResponse(model.SetDuplicateActororResponse, state)
+			app.sendResponse(model.SetDuplicateActuatorResponse, state)
 		case model.SetCurrentCounterLimitRequest:
 			app.QueryCounterLimit = msg.Payload.(int)
 			app.sendResponse(model.SetCurrentCounterLimitResponse, msg.Payload.(int))
@@ -70,6 +67,7 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 
 func (app *BarcodeQueryAppImpl) cleanUp() {
 	log.Println("Cleaning up")
+	app.sendResponse(model.ResetAllCountersResponse, 0)
 	app.QueryCounter = 0
 	app.ScannedDB.DumpWithTimeStamp()
 	app.ErrorDB.DumpWithTimeStamp()
@@ -82,17 +80,6 @@ func (app *BarcodeQueryAppImpl) cleanUp() {
 func (app *BarcodeQueryAppImpl) Run() {
 	app.NumberOfItemInExistingDB = app.ExistingDB.GetDBLength()
 	run := true
-	sigc := make(chan os.Signal, 1)
-	signal.Notify(sigc,
-		syscall.SIGHUP,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT)
-	go func() {
-		<-sigc
-		print("common")
-		run = false
-	}()
 
 	go app.handleClientRequest()
 	go app.DuplicatedItemDB.HandleClientRequest()
@@ -128,15 +115,15 @@ func (app *BarcodeQueryAppImpl) Run() {
 				app.DuplicatedItemDB.Insert(queryString, 0)
 			}
 			go app.Actuator.SetDuplicateActuatorState(actuator.OnState)
-			go app.sendResponse(model.SetDuplicateActororResponse, actuator.OnState)
-		}
-
-		if app.QueryCounter == app.QueryCounterLimit {
-			app.cleanUp()
+			go app.sendResponse(model.SetDuplicateActuatorResponse, actuator.OnState)
 		}
 
 		app.sendResponse(model.CurrentCounterUpdateResponse, app.QueryCounter)
 		app.sendResponse(model.TotalCounterUpdateResponse, app.TotalCounter)
+		if app.QueryCounter == app.QueryCounterLimit {
+			app.cleanUp()
+		}
+
 		log.Printf("Query result %s : %d \n", queryString, existingDBResult)
 	}
 

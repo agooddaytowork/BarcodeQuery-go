@@ -2,6 +2,7 @@ package main
 
 import (
 	"BarcodeQuery/app"
+	"BarcodeQuery/util"
 	"BarcodeQuery/web"
 	"flag"
 	"github.com/textileio/go-threads/broadcast"
@@ -20,6 +21,7 @@ func main() {
 	theWeb := web.GetBarcodeQueryWebImpl(dbBroadCast, clientBroadCast, theConfig.WebStaticFilePath)
 
 	go theWeb.Run()
-	program.Run()
+	go program.Run()
 
+	util.WaitForKillSignal()
 }

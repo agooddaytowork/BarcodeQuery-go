@@ -21,7 +21,7 @@ func (r *TestFileReader) Load(filePath string) {
 	}
 
 	r.Store = strings.Split(string(data), "\n")
-	r.Index = -1
+	r.Index = 0
 
 }
 
@@ -29,7 +29,7 @@ func (r *TestFileReader) Read() string {
 	time.Sleep(r.Interval)
 	r.Index++
 
-	if r.Index > len(r.Store)-1 {
+	if r.Index == len(r.Store) {
 		log.Println("Đã đọc hết test file, thoát chương trình")
 		os.Exit(0)
 	}
