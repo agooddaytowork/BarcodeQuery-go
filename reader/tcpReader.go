@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"log"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -63,5 +64,5 @@ func (r *TCPReader) Read() string {
 	}
 
 	status := <-r.ReportChannel
-	return status
+	return strings.Trim(status, " \r\n\t")
 }
