@@ -10,4 +10,6 @@ type BarcodeDB interface {
 	HandleClientRequest()
 	GetStoreAsQueryResultArray() []QueryResult
 	GetDBLength() int
+	Sync(input map[string]int)
+	GetStore() map[string]int
 }

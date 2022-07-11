@@ -34,6 +34,10 @@ func (db *BarcodeDBHashStorageImpl) GetStoreAsQueryResultArray() []QueryResult {
 }
 
 func (db *BarcodeDBHashStorageImpl) HandleClientRequest() {
+	if db.ClientListener == nil {
+		log.Println("Client listener is nil")
+		return
+	}
 	for true {
 		request := <-db.ClientListener.Channel()
 		msg := request.(model.BarcodeQueryMessage)
@@ -62,9 +66,7 @@ func (db *BarcodeDBHashStorageImpl) Load() *BarcodeDBError {
 			ExceptionMsg: err.Error(),
 		}
 	}
-
 	elements := strings.Split(string(data), "\n")
-
 	newStorage := make(map[string]int)
 	for _, e := range elements {
 		newStorage[strings.Trim(e, " \r\t")] = 0
@@ -129,11 +131,18 @@ Query
 Return -1 if reader not found in list
 Return the number this reader has been queried
 */
+func (db *BarcodeDBHashStorageImpl) sendResponse(msg model.BarcodeQueryMessage) {
+	if db.Broadcaster == nil {
+		log.Println("DB Broadcaster is nil")
+		return
+	}
+	db.Broadcaster.Send(msg)
+}
 func (db *BarcodeDBHashStorageImpl) Query(input string) int {
 	if queriedNumber, ok := db.Store[input]; ok {
 		newQueriedNumber := queriedNumber + 1
 		db.Store[input] = newQueriedNumber
-		db.Broadcaster.Send(model.BarcodeQueryMessage{
+		db.sendResponse(model.BarcodeQueryMessage{
 			MessageType: model.DBQueryNoti,
 			Payload: QueryResult{
 				DBRole:      db.DBRole,
@@ -144,7 +153,7 @@ func (db *BarcodeDBHashStorageImpl) Query(input string) int {
 		return newQueriedNumber
 	}
 
-	db.Broadcaster.Send(model.BarcodeQueryMessage{
+	db.sendResponse(model.BarcodeQueryMessage{
 		MessageType: model.DBQueryNoti,
 		Payload: QueryResult{
 			DBRole:      db.DBRole,
@@ -161,4 +170,13 @@ func (db *BarcodeDBHashStorageImpl) Clear() {
 
 func (db *BarcodeDBHashStorageImpl) GetDBLength() int {
 	return len(db.Store)
+}
+func (db *BarcodeDBHashStorageImpl) GetStore() map[string]int {
+	return db.Store
+}
+
+func (db *BarcodeDBHashStorageImpl) Sync(input map[string]int) {
+	for key := range input {
+		db.Store[key] = 1
+	}
 }

@@ -52,6 +52,9 @@ func (handler *ClientHandlerImpl) provideCurrentStateToClient() {
 	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
 		MessageType: model2.CounterReportRequest,
 	})
+	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
+		MessageType: model2.GetConfigRequest,
+	})
 }
 
 func (handler *ClientHandlerImpl) handle() {

@@ -11,6 +11,17 @@ import (
 )
 
 func GetBarcodeQueryAppImpl(theConfig BarcodeAppConfig, dbBroadCast *broadcast.Broadcaster, clientBroadCast *broadcast.Broadcaster, config BarcodeAppConfig) BarcodeQueryAppImpl {
+
+	persistedScanDB := db.BarcodeDBHashStorageImpl{
+		DBRole:              db.ExistingDBRole,
+		FilePath:            "persisted.txt",
+		Store:               make(map[string]int),
+		Broadcaster:         nil,
+		ClientListener:      nil,
+		IgnoreClientRequest: true,
+	}
+	persistedScanDB.Load()
+
 	existingDB := db.BarcodeDBHashStorageImpl{
 		DBRole:              db.ExistingDBRole,
 		FilePath:            theConfig.ExistingDBPath,
@@ -71,14 +82,14 @@ func GetBarcodeQueryAppImpl(theConfig BarcodeAppConfig, dbBroadCast *broadcast.B
 	default:
 		panic(fmt.Sprintf("Unsupported reader, only support %s/%s/%s", reader.TestFileReaderType, reader.ConsoleReaderType, reader.TCPReaderType))
 	}
-
 	// init the program
 	return BarcodeQueryAppImpl{
-		ExistingDB:       &existingDB,
-		ErrorDB:          &errorDB,
-		DuplicatedItemDB: &duplicatedHistoryDbB,
-		ScannedDB:        &scannedDB,
-		Reader:           theReader,
+		PersistedScannedDB: &persistedScanDB,
+		ExistingDB:         &existingDB,
+		ErrorDB:            &errorDB,
+		DuplicatedItemDB:   &duplicatedHistoryDbB,
+		ScannedDB:          &scannedDB,
+		Reader:             theReader,
 		CounterReport: model.CounterReport{
 			QueryCounter:             0,
 			QueryCounterLimit:        theConfig.QueryCounterLimit,
