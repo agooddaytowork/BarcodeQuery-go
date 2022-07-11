@@ -44,7 +44,7 @@ func (web *BarcodeQueryWebImpl) handleUploadList(w http.ResponseWriter, r *http.
 		}
 		defer file.Close()
 		fmt.Fprintf(w, "%v", handler.Header)
-		f, err := os.OpenFile(web.BarcodeListFilePath, os.O_WRONLY|os.O_CREATE, 0666)
+		f, err := os.OpenFile(web.BarcodeListFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 		if err != nil {
 			fmt.Println(err)
 			return
