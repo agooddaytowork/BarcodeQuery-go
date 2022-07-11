@@ -61,10 +61,8 @@ func (db *BarcodeDBHashStorageImpl) Load() *BarcodeDBError {
 	data, err := os.ReadFile(db.FilePath)
 
 	if err != nil {
-		panic(err)
-		return &BarcodeDBError{
-			ExceptionMsg: err.Error(),
-		}
+		log.Println(err)
+		return nil
 	}
 	elements := strings.Split(string(data), "\n")
 	newStorage := make(map[string]int)
@@ -78,9 +76,9 @@ func (db *BarcodeDBHashStorageImpl) Load() *BarcodeDBError {
 }
 
 func (db *BarcodeDBHashStorageImpl) dump(inputPath string) *BarcodeDBError {
-	if len(db.Store) == 0 {
-		return nil
-	}
+	//if len(db.Store) == 0 {
+	//	return nil
+	//}
 
 	f, err := os.Create(inputPath)
 	if err != nil {

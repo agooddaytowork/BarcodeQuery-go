@@ -34,6 +34,7 @@ func (app *BarcodeQueryAppImpl) sendResponse(msgType model.MessageType, payload 
 func (app *BarcodeQueryAppImpl) handleAppReset() {
 	app.PersistedScannedDB.Clear()
 	app.PersistedScannedDB.Dump()
+
 	app.ExistingDB.Clear()
 	app.ExistingDB.Load()
 	app.ScannedDB.Clear()
@@ -97,6 +98,7 @@ func (app *BarcodeQueryAppImpl) cleanUp() {
 
 func (app *BarcodeQueryAppImpl) syncPersistedScannedDBToExistingDB() {
 	app.ExistingDB.Sync(app.PersistedScannedDB.GetStore())
+	app.CounterReport.TotalCounter = app.PersistedScannedDB.GetDBLength()
 }
 
 func (app *BarcodeQueryAppImpl) Run() {
