@@ -11,9 +11,10 @@ import (
 )
 
 type BarcodeQueryWebImpl struct {
-	Broadcaster     *broadcast.Broadcaster
-	ClientBroadCast *broadcast.Broadcaster
-	StaticFilePath  string
+	Broadcaster         *broadcast.Broadcaster
+	ClientBroadCast     *broadcast.Broadcaster
+	StaticFilePath      string
+	BarcodeListFilePath string
 }
 
 func (web *BarcodeQueryWebImpl) Run() {
@@ -43,7 +44,7 @@ func (web *BarcodeQueryWebImpl) handleUploadList(w http.ResponseWriter, r *http.
 		}
 		defer file.Close()
 		fmt.Fprintf(w, "%v", handler.Header)
-		f, err := os.OpenFile("./local/"+handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
+		f, err := os.OpenFile(web.BarcodeListFilePath, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
 			fmt.Println(err)
 			return
