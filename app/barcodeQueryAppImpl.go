@@ -94,6 +94,10 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 			app.CounterReport.PackageCounter++
 			app.cleanUp()
 			app.sendResponse(model.CounterReportResponse, app.CounterReport)
+		case model.SetCameraErrorActuatorRequest:
+			state := actuator.GetState(msg.Payload.(bool))
+			app.sendResponse(model.SetCameraErrorActuatorResponse, state)
+			// todo , add camera error actuator
 		}
 	}
 }
@@ -129,9 +133,12 @@ func (app *BarcodeQueryAppImpl) Run() {
 	for run {
 		queryString := app.Reader.Read()
 
-		if queryString == "error" {
+		if queryString == CAMERA_ERROR_1 {
 			// todo: alert to UI
 			// trigger actuator
+			// send response
+			app.sendResponse(model.SetCameraErrorActuatorResponse, true)
+			continue
 		}
 
 		existingDBResult := app.ExistingDB.Query(queryString)

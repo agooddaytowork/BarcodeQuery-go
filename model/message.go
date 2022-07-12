@@ -31,6 +31,8 @@ const (
 	ResetCurrentCounterRequest
 	ResetCurrentCounterResponse
 	CurrentCounterHitLimitNoti
+	SetCameraErrorActuatorRequest
+	SetCameraErrorActuatorResponse
 )
 
 type BarcodeQueryMessage struct {
