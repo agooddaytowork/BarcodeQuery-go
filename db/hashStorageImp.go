@@ -67,7 +67,10 @@ func (db *BarcodeDBHashStorageImpl) Load() *BarcodeDBError {
 	elements := strings.Split(string(data), "\n")
 	newStorage := make(map[string]int)
 	for _, e := range elements {
-		newStorage[strings.Trim(e, " \r\t")] = 0
+		element := strings.Trim(e, " \r\t")
+		if element != "" {
+			newStorage[element] = 0
+		}
 	}
 
 	log.Printf("LOAD %d items from %s \n", len(newStorage), db.FilePath)
