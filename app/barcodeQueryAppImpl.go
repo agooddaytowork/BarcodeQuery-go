@@ -5,6 +5,7 @@ import (
 	"BarcodeQuery/db"
 	"BarcodeQuery/model"
 	"BarcodeQuery/reader"
+	"BarcodeQuery/util"
 	"encoding/json"
 	"github.com/textileio/go-threads/broadcast"
 	"log"
@@ -86,7 +87,13 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 			app.CounterReport.QueryCounterLimit = app.Config.QueryCounterLimit
 			app.sendResponse(model.GetConfigResponse, app.Config)
 			app.sendResponse(model.CounterReportResponse, app.CounterReport)
-			DumpConfigToFile(app.ConfigPath, app.Config)
+			util.DumpConfigToFile(app.ConfigPath, app.Config)
+
+		case model.ResetCurrentCounterRequest:
+			app.CounterReport.QueryCounter = 0
+			app.CounterReport.PackageCounter++
+			app.cleanUp()
+			app.sendResponse(model.CounterReportResponse, app.CounterReport)
 		}
 	}
 }
@@ -121,6 +128,12 @@ func (app *BarcodeQueryAppImpl) Run() {
 
 	for run {
 		queryString := app.Reader.Read()
+
+		if queryString == "error" {
+			// todo: alert to UI
+			// trigger actuator
+		}
+
 		existingDBResult := app.ExistingDB.Query(queryString)
 
 		if existingDBResult < 0 {
@@ -150,8 +163,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 			go app.sendResponse(model.SetDuplicateActuatorResponse, actuator.OnState)
 		}
 		if app.CounterReport.QueryCounter == app.CounterReport.QueryCounterLimit {
-			app.CounterReport.PackageCounter++
-			app.cleanUp()
+			app.sendResponse(model.CurrentCounterHitLimitNoti, 0)
 		}
 		app.sendResponse(model.CounterReportResponse, app.CounterReport)
 		log.Printf("Query result %s : %d \n", queryString, existingDBResult)

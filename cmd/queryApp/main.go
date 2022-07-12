@@ -13,7 +13,8 @@ func main() {
 	configPath := flag.String("c", "test/config3.json", "Config path")
 	flag.Parse()
 
-	theConfig := app.LoadConfigFromFile(*configPath)
+	var theConfig app.BarcodeAppConfig
+	util.LoadConfigFromFile(*configPath, &theConfig)
 	dbBroadCast := broadcast.NewBroadcaster(100)
 	clientBroadCast := broadcast.NewBroadcaster(100)
 

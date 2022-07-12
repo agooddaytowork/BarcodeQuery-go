@@ -28,6 +28,9 @@ const (
 	GetConfigResponse
 	SetConfigRequest
 	SetConfigResponse
+	ResetCurrentCounterRequest
+	ResetCurrentCounterResponse
+	CurrentCounterHitLimitNoti
 )
 
 type BarcodeQueryMessage struct {
