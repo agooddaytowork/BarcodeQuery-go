@@ -1,12 +1,13 @@
 {
-  "existing_db_path": "test/100k.txt",
-  "error_db_path": "local/error.txt",
-  "scanned_db_path": "local/scanned.txt",
-  "duplicated_db_path": "local/duplicated.txt",
-  "reader_type": "tcp_reader",
-  "reader_uri": "localhost:9000",
-  "query_counter_limit": 50,
-  "enable_actuator": false,
-  "web_static_file_path": "local/web",
-  "enable_sound_alert": true
+    "existing_db_path": "test/100k.txt",
+    "error_db_path": "local/error.txt",
+    "scanned_db_path": "local/scanned.txt",
+    "duplicated_db_path": "local/duplicated.txt",
+    "reader_type": "tcp_reader",
+    "reader_uri": "localhost:9000",
+    "query_counter_limit": 100,
+    "enable_actuator": true,
+    "enable_sound_alert": true,
+    "auto_reset_actuator": false,
+    "web_static_file_path": "local/web"
 }

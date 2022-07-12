@@ -5,6 +5,7 @@ import (
 	"BarcodeQuery/db"
 	"BarcodeQuery/model"
 	"BarcodeQuery/reader"
+	"encoding/json"
 	"github.com/textileio/go-threads/broadcast"
 	"log"
 )
@@ -21,6 +22,7 @@ type BarcodeQueryAppImpl struct {
 	ClientListener     *broadcast.Listener
 	Actuator           actuator.BarcodeActuator
 	Config             BarcodeAppConfig
+	ConfigPath         string
 }
 
 func (app *BarcodeQueryAppImpl) sendResponse(msgType model.MessageType, payload any) {
@@ -77,8 +79,14 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 		case model.GetConfigRequest:
 			app.sendResponse(model.GetConfigResponse, app.Config)
 		case model.SetConfigRequest:
-			app.Config = msg.Payload.(BarcodeAppConfig)
-			app.sendResponse(model.SetConfigResponse, 1)
+			var newConfig BarcodeAppConfig
+			jsonString, _ := json.Marshal(msg.Payload)
+			json.Unmarshal(jsonString, &newConfig)
+			app.Config = newConfig
+			app.CounterReport.QueryCounterLimit = app.Config.QueryCounterLimit
+			app.sendResponse(model.GetConfigResponse, app.Config)
+			app.sendResponse(model.CounterReportResponse, app.CounterReport)
+			DumpConfigToFile(app.ConfigPath, app.Config)
 		}
 	}
 }

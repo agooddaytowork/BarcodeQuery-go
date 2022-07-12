@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func GetBarcodeQueryAppImpl(theConfig BarcodeAppConfig, dbBroadCast *broadcast.Broadcaster, clientBroadCast *broadcast.Broadcaster, config BarcodeAppConfig) BarcodeQueryAppImpl {
+func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBroadCast *broadcast.Broadcaster, clientBroadCast *broadcast.Broadcaster, config BarcodeAppConfig) BarcodeQueryAppImpl {
 
 	persistedScanDB := db.BarcodeDBHashStorageImpl{
 		DBRole:              db.ExistingDBRole,
@@ -90,6 +90,7 @@ func GetBarcodeQueryAppImpl(theConfig BarcodeAppConfig, dbBroadCast *broadcast.B
 		DuplicatedItemDB:   &duplicatedHistoryDbB,
 		ScannedDB:          &scannedDB,
 		Reader:             theReader,
+		ConfigPath:         configPath,
 		CounterReport: model.CounterReport{
 			QueryCounter:             0,
 			QueryCounterLimit:        theConfig.QueryCounterLimit,

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"os"
 )
 
 type BarcodeAppConfig struct {
@@ -29,4 +30,11 @@ func LoadConfigFromFile(filePath string) BarcodeAppConfig {
 		log.Panicf("File config %s không đúng format, lỗi: %s \n", filePath, err.Error())
 	}
 	return data
+}
+
+func DumpConfigToFile(filePath string, config BarcodeAppConfig) {
+	file, _ := os.OpenFile(filePath, os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
+	jsonString, _ := json.MarshalIndent(config, "", "    ")
+	file.Write(jsonString)
+	defer file.Close()
 }

@@ -17,7 +17,7 @@ func main() {
 	dbBroadCast := broadcast.NewBroadcaster(100)
 	clientBroadCast := broadcast.NewBroadcaster(100)
 
-	program := app.GetBarcodeQueryAppImpl(theConfig, dbBroadCast, clientBroadCast, theConfig)
+	program := app.GetBarcodeQueryAppImpl(*configPath, theConfig, dbBroadCast, clientBroadCast, theConfig)
 	theWeb := web.GetBarcodeQueryWebImpl(dbBroadCast, clientBroadCast, theConfig.WebStaticFilePath, theConfig.ExistingDBPath)
 
 	go theWeb.Run()
