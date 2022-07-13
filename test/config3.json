@@ -1,5 +1,5 @@
 {
-    "existing_db_path": "test/somethingfunny.txt",
+    "existing_db_path": "test/test.txt",
     "error_db_path": "local/error.txt",
     "scanned_db_path": "local/scanned.txt",
     "duplicated_db_path": "local/duplicated.txt",
