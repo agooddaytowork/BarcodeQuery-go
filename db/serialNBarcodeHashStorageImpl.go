@@ -11,30 +11,22 @@ import (
 	"time"
 )
 
-type SerialHashStorageImpl struct {
+type SerialNBarcodeHashStorageImpl struct {
 	DBRole              DBRole
 	FilePath            string
-	Store               map[string]int
+	Store               map[string]string
 	Broadcaster         *broadcast.Broadcaster
 	ClientListener      *broadcast.Listener
 	IgnoreClientRequest bool
 }
 
-func (db *SerialHashStorageImpl) GetStoreAsQueryResultArray() []QueryResult {
+func (db *SerialNBarcodeHashStorageImpl) GetStoreAsQueryResultArray() []QueryResult {
 	var result []QueryResult
-
-	for element := range db.Store {
-		result = append(result, QueryResult{
-			DBRole:      db.DBRole,
-			QueryString: element,
-			QueryResult: db.Store[element],
-		})
-	}
 
 	return result
 }
 
-func (db *SerialHashStorageImpl) HandleClientRequest() {
+func (db *SerialNBarcodeHashStorageImpl) HandleClientRequest() {
 	if db.ClientListener == nil {
 		log.Println("Client listener is nil")
 		return
@@ -43,22 +35,11 @@ func (db *SerialHashStorageImpl) HandleClientRequest() {
 		request := <-db.ClientListener.Channel()
 		msg := request.(model.BarcodeQueryMessage)
 		if msg.MessageType == model.DBStateUpdateRequest && len(db.Store) != 0 {
-			if msg.Payload.(DBRole) == db.DBRole {
-				db.Broadcaster.Send(
-					model.BarcodeQueryMessage{
-						MessageType: model.DBStateUpdateResponse,
-						Payload: StateUpdate{
-							DBRole: db.DBRole,
-							State:  db.GetStoreAsQueryResultArray(),
-						},
-					},
-				)
-			}
 		}
 	}
 }
 
-func (db *SerialHashStorageImpl) Load(classifier classifier.TupleClassifier) *BarcodeDBError {
+func (db *SerialNBarcodeHashStorageImpl) Load(classifier classifier.TupleClassifier) *BarcodeDBError {
 	data, err := os.ReadFile(db.FilePath)
 
 	if err != nil {
@@ -66,11 +47,11 @@ func (db *SerialHashStorageImpl) Load(classifier classifier.TupleClassifier) *Ba
 		return nil
 	}
 	elements := strings.Split(string(data), "\n")
-	newStorage := make(map[string]int)
+	newStorage := make(map[string]string)
 	for _, e := range elements {
-		element, _ := classifier.Classify(e)
-		if element != "" {
-			newStorage[element] = 0
+		key, val := classifier.Classify(e)
+		if key != "" {
+			newStorage[key] = val
 		}
 	}
 
@@ -79,7 +60,7 @@ func (db *SerialHashStorageImpl) Load(classifier classifier.TupleClassifier) *Ba
 	return nil
 }
 
-func (db *SerialHashStorageImpl) dump(inputPath string) *BarcodeDBError {
+func (db *SerialNBarcodeHashStorageImpl) dump(inputPath string) *BarcodeDBError {
 	//if len(db.Store) == 0 {
 	//	return nil
 	//}
@@ -107,16 +88,16 @@ func (db *SerialHashStorageImpl) dump(inputPath string) *BarcodeDBError {
 	return nil
 }
 
-func (db *SerialHashStorageImpl) Dump() *BarcodeDBError {
+func (db *SerialNBarcodeHashStorageImpl) Dump() *BarcodeDBError {
 	return db.dump(db.FilePath)
 }
 
-func (db *SerialHashStorageImpl) DumpWithTimeStamp() *BarcodeDBError {
+func (db *SerialNBarcodeHashStorageImpl) DumpWithTimeStamp() *BarcodeDBError {
 	fileName := strings.Replace(db.FilePath, ".txt", "", 1) + "-" + time.Now().Format("2006-01-02-15-04-05") + ".txt"
 	return db.dump(fileName)
 }
 
-func (db *SerialHashStorageImpl) Insert(input string, queriedValue int) *BarcodeDBError {
+func (db *SerialNBarcodeHashStorageImpl) Insert(input string, queriedValue string) *BarcodeDBError {
 
 	if _, ok := db.Store[input]; !ok {
 		db.Store[input] = queriedValue
@@ -133,26 +114,24 @@ Query
 Return -1 if reader not found in list
 Return the number this reader has been queried
 */
-func (db *SerialHashStorageImpl) sendResponse(msg model.BarcodeQueryMessage) {
+func (db *SerialNBarcodeHashStorageImpl) sendResponse(msg model.BarcodeQueryMessage) {
 	if db.Broadcaster == nil {
 		log.Println("DB Broadcaster is nil")
 		return
 	}
 	db.Broadcaster.Send(msg)
 }
-func (db *SerialHashStorageImpl) Query(input string) int {
-	if queriedNumber, ok := db.Store[input]; ok {
-		newQueriedNumber := queriedNumber + 1
-		db.Store[input] = newQueriedNumber
+func (db *SerialNBarcodeHashStorageImpl) Query(input string) int {
+	if _, ok := db.Store[input]; ok {
 		db.sendResponse(model.BarcodeQueryMessage{
 			MessageType: model.DBQueryNoti,
 			Payload: QueryResult{
 				DBRole:      db.DBRole,
 				QueryString: input,
-				QueryResult: newQueriedNumber,
+				QueryResult: 1,
 			},
 		})
-		return newQueriedNumber
+		return 1
 	}
 
 	db.sendResponse(model.BarcodeQueryMessage{
@@ -166,19 +145,16 @@ func (db *SerialHashStorageImpl) Query(input string) int {
 	return -1
 }
 
-func (db *SerialHashStorageImpl) Clear() {
-	db.Store = make(map[string]int)
+func (db *SerialNBarcodeHashStorageImpl) Clear() {
+	db.Store = make(map[string]string)
 }
 
-func (db *SerialHashStorageImpl) GetDBLength() int {
+func (db *SerialNBarcodeHashStorageImpl) GetDBLength() int {
 	return len(db.Store)
 }
-func (db *SerialHashStorageImpl) GetStore() map[string]int {
+func (db *SerialNBarcodeHashStorageImpl) GetStore() map[string]string {
 	return db.Store
 }
 
-func (db *SerialHashStorageImpl) Sync(input map[string]int) {
-	for key := range input {
-		db.Store[key] = 1
-	}
+func (db *SerialNBarcodeHashStorageImpl) Sync(input map[string]string) {
 }

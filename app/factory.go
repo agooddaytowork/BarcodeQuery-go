@@ -2,6 +2,7 @@ package app
 
 import (
 	"BarcodeQuery/actuator"
+	"BarcodeQuery/classifier"
 	"BarcodeQuery/db"
 	"BarcodeQuery/model"
 	"BarcodeQuery/reader"
@@ -12,17 +13,17 @@ import (
 
 func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBroadCast *broadcast.Broadcaster, clientBroadCast *broadcast.Broadcaster, config BarcodeAppConfig) BarcodeQueryAppImpl {
 
-	persistedScanDB := db.BarcodeDBHashStorageImpl{
-		DBRole:              db.ExistingDBRole,
+	persistedScanDB := db.SerialHashStorageImpl{
+		DBRole:              db.PersitedDBRole,
 		FilePath:            "persisted.txt",
 		Store:               make(map[string]int),
 		Broadcaster:         nil,
 		ClientListener:      nil,
 		IgnoreClientRequest: true,
 	}
-	persistedScanDB.Load()
+	persistedScanDB.Load(&classifier.DummyBarcodeTupleClassifier{})
 
-	existingDB := db.BarcodeDBHashStorageImpl{
+	barcodeExistingDB := db.SerialHashStorageImpl{
 		DBRole:              db.ExistingDBRole,
 		FilePath:            theConfig.ExistingDBPath,
 		Store:               make(map[string]int),
@@ -30,9 +31,9 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		ClientListener:      clientBroadCast.Listen(),
 		IgnoreClientRequest: true,
 	}
-	err := existingDB.Load()
+	err := barcodeExistingDB.Load(&classifier.BarcodeTupleClassifier{})
 
-	errorDB := db.BarcodeDBHashStorageImpl{
+	errorDB := db.SerialHashStorageImpl{
 		DBRole:         db.ErrorDBRole,
 		FilePath:       theConfig.ErrorDBPath,
 		Store:          make(map[string]int),
@@ -40,7 +41,7 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		ClientListener: clientBroadCast.Listen(),
 	}
 
-	duplicatedHistoryDbB := db.BarcodeDBHashStorageImpl{
+	duplicatedHistoryDbB := db.SerialHashStorageImpl{
 		DBRole:         db.DuplicatedHistoryDB,
 		FilePath:       theConfig.DuplicatedDBPath,
 		Store:          make(map[string]int),
@@ -48,7 +49,7 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		ClientListener: clientBroadCast.Listen(),
 	}
 
-	scannedDB := db.BarcodeDBHashStorageImpl{
+	scannedDB := db.SerialHashStorageImpl{
 		DBRole:         db.ScannedDB,
 		FilePath:       theConfig.ScannedDBPath,
 		Store:          make(map[string]int),
@@ -85,7 +86,7 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 	// init the program
 	return BarcodeQueryAppImpl{
 		PersistedScannedDB: &persistedScanDB,
-		ExistingDB:         &existingDB,
+		BarcodeExistingDB:  &barcodeExistingDB,
 		ErrorDB:            &errorDB,
 		DuplicatedItemDB:   &duplicatedHistoryDbB,
 		ScannedDB:          &scannedDB,

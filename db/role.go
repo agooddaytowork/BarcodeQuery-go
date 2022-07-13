@@ -7,4 +7,5 @@ const (
 	ErrorDBRole
 	DuplicatedHistoryDB
 	ScannedDB
+	PersitedDBRole
 )

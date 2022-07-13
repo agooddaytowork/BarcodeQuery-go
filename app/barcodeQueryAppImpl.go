@@ -2,6 +2,7 @@ package app
 
 import (
 	"BarcodeQuery/actuator"
+	"BarcodeQuery/classifier"
 	"BarcodeQuery/db"
 	"BarcodeQuery/model"
 	"BarcodeQuery/reader"
@@ -12,18 +13,19 @@ import (
 )
 
 type BarcodeQueryAppImpl struct {
-	ExistingDB         db.BarcodeDB
-	DuplicatedItemDB   db.BarcodeDB
-	ErrorDB            db.BarcodeDB
-	ScannedDB          db.BarcodeDB
-	PersistedScannedDB db.BarcodeDB
-	Reader             reader.BarcodeReader
-	CounterReport      model.CounterReport
-	Broadcaster        *broadcast.Broadcaster
-	ClientListener     *broadcast.Listener
-	Actuator           actuator.BarcodeActuator
-	Config             BarcodeAppConfig
-	ConfigPath         string
+	BarcodeExistingDB  db.SerialDB
+	DuplicatedItemDB   db.SerialDB
+	ErrorDB            db.SerialDB
+	ScannedDB          db.SerialDB
+	PersistedScannedDB db.SerialDB
+
+	Reader         reader.BarcodeReader
+	CounterReport  model.CounterReport
+	Broadcaster    *broadcast.Broadcaster
+	ClientListener *broadcast.Listener
+	Actuator       actuator.BarcodeActuator
+	Config         BarcodeAppConfig
+	ConfigPath     string
 }
 
 func (app *BarcodeQueryAppImpl) sendResponse(msgType model.MessageType, payload any) {
@@ -38,15 +40,15 @@ func (app *BarcodeQueryAppImpl) handleAppReset() {
 	app.PersistedScannedDB.Clear()
 	app.PersistedScannedDB.Dump()
 
-	app.ExistingDB.Clear()
-	app.ExistingDB.Load()
+	app.BarcodeExistingDB.Clear()
+	app.BarcodeExistingDB.Load(&classifier.BarcodeTupleClassifier{})
 	app.ScannedDB.Clear()
 	app.ErrorDB.Clear()
 	app.DuplicatedItemDB.Clear()
 	app.CounterReport.TotalCounter = 0
 	app.CounterReport.QueryCounter = 0
 	app.CounterReport.PackageCounter = 0
-	app.CounterReport.NumberOfItemInExistingDB = app.ExistingDB.GetDBLength()
+	app.CounterReport.NumberOfItemInExistingDB = app.BarcodeExistingDB.GetDBLength()
 	app.sendResponse(model.RestAppResponse, "ok")
 	app.sendResponse(model.CounterReportResponse, app.CounterReport)
 }
@@ -116,12 +118,12 @@ func (app *BarcodeQueryAppImpl) cleanUp() {
 }
 
 func (app *BarcodeQueryAppImpl) syncPersistedScannedDBToExistingDB() {
-	app.ExistingDB.Sync(app.PersistedScannedDB.GetStore())
+	app.BarcodeExistingDB.Sync(app.PersistedScannedDB.GetStore())
 	app.CounterReport.TotalCounter = app.PersistedScannedDB.GetDBLength()
 }
 
 func (app *BarcodeQueryAppImpl) Run() {
-	app.CounterReport.NumberOfItemInExistingDB = app.ExistingDB.GetDBLength()
+	app.CounterReport.NumberOfItemInExistingDB = app.BarcodeExistingDB.GetDBLength()
 	app.syncPersistedScannedDBToExistingDB()
 	run := true
 
@@ -141,7 +143,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 			continue
 		}
 
-		existingDBResult := app.ExistingDB.Query(queryString)
+		existingDBResult := app.BarcodeExistingDB.Query(queryString)
 
 		if existingDBResult < 0 {
 			// not found in existing DB -> ERROR
