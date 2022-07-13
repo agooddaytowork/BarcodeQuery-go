@@ -21,7 +21,10 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		ClientListener:      nil,
 		IgnoreClientRequest: true,
 	}
-	persistedScanDB.Load(&classifier.DummyBarcodeTupleClassifier{})
+	err := persistedScanDB.Load(&classifier.DummyBarcodeTupleClassifier{})
+	if err != nil {
+		panic(err)
+	}
 
 	barcodeExistingDB := db.SerialHashStorageImpl{
 		DBRole:              db.ExistingDBRole,
@@ -31,7 +34,31 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		ClientListener:      clientBroadCast.Listen(),
 		IgnoreClientRequest: true,
 	}
-	err := barcodeExistingDB.Load(&classifier.BarcodeTupleClassifier{})
+	err = barcodeExistingDB.Load(&classifier.BarcodeTupleClassifier{})
+	if err != nil {
+		panic(err)
+	}
+
+	barcodeNSerialDB := db.SerialNBarcodeHashStorageImpl{
+		DBRole:              db.BarcodeVsSerialDB,
+		FilePath:            theConfig.ExistingDBPath,
+		Store:               make(map[string]string),
+		Broadcaster:         dbBroadCast,
+		ClientListener:      clientBroadCast.Listen(),
+		IgnoreClientRequest: true,
+	}
+	barcodeNSerialDB.Load(&classifier.BarcodeNSerialTupleClassifier{})
+
+	serialNBarcodeDB := db.SerialNBarcodeHashStorageImpl{
+		DBRole:              db.BarcodeVsSerialDB,
+		FilePath:            theConfig.ExistingDBPath,
+		Store:               make(map[string]string),
+		Broadcaster:         dbBroadCast,
+		ClientListener:      clientBroadCast.Listen(),
+		IgnoreClientRequest: true,
+	}
+
+	serialNBarcodeDB.Load(&classifier.SerialNBarcodeTupleClassifier{})
 
 	errorDB := db.SerialHashStorageImpl{
 		DBRole:         db.ErrorDBRole,
@@ -89,6 +116,8 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		BarcodeExistingDB:  &barcodeExistingDB,
 		ErrorDB:            &errorDB,
 		DuplicatedItemDB:   &duplicatedHistoryDbB,
+		BarcodeAndSerialDB: &barcodeNSerialDB,
+		SerialAndBarcodeDB: &serialNBarcodeDB,
 		ScannedDB:          &scannedDB,
 		Reader:             theReader,
 		ConfigPath:         configPath,

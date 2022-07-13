@@ -8,4 +8,6 @@ const (
 	DuplicatedHistoryDB
 	ScannedDB
 	PersitedDBRole
+	BarcodeVsSerialDB
+	SerialVsBarcodeDB
 )

@@ -14,18 +14,19 @@ import (
 
 type BarcodeQueryAppImpl struct {
 	BarcodeExistingDB  db.SerialDB
+	SerialAndBarcodeDB db.SerialNBarcodeDB
+	BarcodeAndSerialDB db.SerialNBarcodeDB
 	DuplicatedItemDB   db.SerialDB
 	ErrorDB            db.SerialDB
 	ScannedDB          db.SerialDB
 	PersistedScannedDB db.SerialDB
-
-	Reader         reader.BarcodeReader
-	CounterReport  model.CounterReport
-	Broadcaster    *broadcast.Broadcaster
-	ClientListener *broadcast.Listener
-	Actuator       actuator.BarcodeActuator
-	Config         BarcodeAppConfig
-	ConfigPath     string
+	Reader             reader.BarcodeReader
+	CounterReport      model.CounterReport
+	Broadcaster        *broadcast.Broadcaster
+	ClientListener     *broadcast.Listener
+	Actuator           actuator.BarcodeActuator
+	Config             BarcodeAppConfig
+	ConfigPath         string
 }
 
 func (app *BarcodeQueryAppImpl) sendResponse(msgType model.MessageType, payload any) {
@@ -39,7 +40,6 @@ func (app *BarcodeQueryAppImpl) sendResponse(msgType model.MessageType, payload 
 func (app *BarcodeQueryAppImpl) handleAppReset() {
 	app.PersistedScannedDB.Clear()
 	app.PersistedScannedDB.Dump()
-
 	app.BarcodeExistingDB.Clear()
 	app.BarcodeExistingDB.Load(&classifier.BarcodeTupleClassifier{})
 	app.ScannedDB.Clear()
@@ -118,7 +118,13 @@ func (app *BarcodeQueryAppImpl) cleanUp() {
 }
 
 func (app *BarcodeQueryAppImpl) syncPersistedScannedDBToExistingDB() {
-	app.BarcodeExistingDB.Sync(app.PersistedScannedDB.GetStore())
+	theMap := make(map[string]int)
+	serialNBarcodeMap := app.SerialAndBarcodeDB.GetStore()
+	for serial := range app.PersistedScannedDB.GetStore() {
+		barcode := serialNBarcodeMap[serial]
+		theMap[barcode] = 1
+	}
+	app.BarcodeExistingDB.Sync(theMap)
 	app.CounterReport.TotalCounter = app.PersistedScannedDB.GetDBLength()
 }
 
@@ -133,23 +139,19 @@ func (app *BarcodeQueryAppImpl) Run() {
 	go app.ScannedDB.HandleClientRequest()
 
 	for run {
-		queryString := app.Reader.Read()
-
-		if queryString == CAMERA_ERROR_1 {
-			// todo: alert to UI
+		barcode := app.Reader.Read()
+		if barcode == CAMERA_ERROR_1 {
 			// trigger actuator
 			// send response
 			app.sendResponse(model.SetCameraErrorActuatorResponse, true)
 			continue
 		}
-
-		existingDBResult := app.BarcodeExistingDB.Query(queryString)
-
+		existingDBResult := app.BarcodeExistingDB.Query(barcode)
 		if existingDBResult < 0 {
 			// not found in existing DB -> ERROR
-			errorQuery := app.ErrorDB.Query(queryString)
+			errorQuery := app.ErrorDB.Query(barcode)
 			if errorQuery == -1 {
-				app.ErrorDB.Insert(queryString, 0)
+				app.ErrorDB.Insert(barcode, 0)
 			}
 			go app.Actuator.SetErrorActuatorState(actuator.OnState)
 			go app.sendResponse(model.SetErrorActuatorResponse, actuator.OnState)
@@ -157,16 +159,20 @@ func (app *BarcodeQueryAppImpl) Run() {
 		} else if existingDBResult == 1 {
 			// found barcode
 			// do something
-			app.ScannedDB.Insert(queryString, 0)
-			app.PersistedScannedDB.Insert(queryString, 0)
-			app.ScannedDB.Query(queryString)
+
+			serialNumber := app.SerialAndBarcodeDB.Query(barcode)
+
+			app.ScannedDB.Insert(serialNumber, 0)
+			app.PersistedScannedDB.Insert(serialNumber, 0)
+			app.ScannedDB.Query(serialNumber)
 			app.CounterReport.QueryCounter++
 			app.CounterReport.TotalCounter++
 		} else {
 			// found duplicated query
-			duplicateQuery := app.DuplicatedItemDB.Query(queryString)
+			serialNumber := app.SerialAndBarcodeDB.Query(barcode)
+			duplicateQuery := app.DuplicatedItemDB.Query(serialNumber)
 			if duplicateQuery == -1 {
-				app.DuplicatedItemDB.Insert(queryString, 0)
+				app.DuplicatedItemDB.Insert(serialNumber, 0)
 			}
 			go app.Actuator.SetDuplicateActuatorState(actuator.OnState)
 			go app.sendResponse(model.SetDuplicateActuatorResponse, actuator.OnState)
@@ -175,7 +181,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 			app.sendResponse(model.CurrentCounterHitLimitNoti, 0)
 		}
 		app.sendResponse(model.CounterReportResponse, app.CounterReport)
-		log.Printf("Query result %s : %d \n", queryString, existingDBResult)
+		log.Printf("Query result %s : %d \n", barcode, existingDBResult)
 	}
 
 	defer app.cleanUp()

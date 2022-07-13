@@ -20,8 +20,8 @@ type SerialNBarcodeHashStorageImpl struct {
 	IgnoreClientRequest bool
 }
 
-func (db *SerialNBarcodeHashStorageImpl) GetStoreAsQueryResultArray() []QueryResult {
-	var result []QueryResult
+func (db *SerialNBarcodeHashStorageImpl) GetStoreAsQueryResultArray() []QueryIntResult {
+	var result []QueryIntResult
 
 	return result
 }
@@ -98,12 +98,10 @@ func (db *SerialNBarcodeHashStorageImpl) DumpWithTimeStamp() *BarcodeDBError {
 }
 
 func (db *SerialNBarcodeHashStorageImpl) Insert(input string, queriedValue string) *BarcodeDBError {
-
 	if _, ok := db.Store[input]; !ok {
 		db.Store[input] = queriedValue
 		return nil
 	}
-
 	return &BarcodeDBError{
 		ExceptionMsg: fmt.Sprintf("value %s exist", input),
 	}
@@ -121,28 +119,28 @@ func (db *SerialNBarcodeHashStorageImpl) sendResponse(msg model.BarcodeQueryMess
 	}
 	db.Broadcaster.Send(msg)
 }
-func (db *SerialNBarcodeHashStorageImpl) Query(input string) int {
-	if _, ok := db.Store[input]; ok {
+func (db *SerialNBarcodeHashStorageImpl) Query(input string) string {
+	if value, ok := db.Store[input]; ok {
 		db.sendResponse(model.BarcodeQueryMessage{
 			MessageType: model.DBQueryNoti,
-			Payload: QueryResult{
+			Payload: QueryIntResult{
 				DBRole:      db.DBRole,
 				QueryString: input,
 				QueryResult: 1,
 			},
 		})
-		return 1
+		return value
 	}
 
 	db.sendResponse(model.BarcodeQueryMessage{
 		MessageType: model.DBQueryNoti,
-		Payload: QueryResult{
+		Payload: QueryIntResult{
 			DBRole:      db.DBRole,
 			QueryString: input,
 			QueryResult: -1,
 		},
 	})
-	return -1
+	return ""
 }
 
 func (db *SerialNBarcodeHashStorageImpl) Clear() {

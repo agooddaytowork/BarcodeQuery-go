@@ -20,11 +20,11 @@ type SerialHashStorageImpl struct {
 	IgnoreClientRequest bool
 }
 
-func (db *SerialHashStorageImpl) GetStoreAsQueryResultArray() []QueryResult {
-	var result []QueryResult
+func (db *SerialHashStorageImpl) GetStoreAsQueryResultArray() []QueryIntResult {
+	var result []QueryIntResult
 
 	for element := range db.Store {
-		result = append(result, QueryResult{
+		result = append(result, QueryIntResult{
 			DBRole:      db.DBRole,
 			QueryString: element,
 			QueryResult: db.Store[element],
@@ -146,7 +146,7 @@ func (db *SerialHashStorageImpl) Query(input string) int {
 		db.Store[input] = newQueriedNumber
 		db.sendResponse(model.BarcodeQueryMessage{
 			MessageType: model.DBQueryNoti,
-			Payload: QueryResult{
+			Payload: QueryIntResult{
 				DBRole:      db.DBRole,
 				QueryString: input,
 				QueryResult: newQueriedNumber,
@@ -157,7 +157,7 @@ func (db *SerialHashStorageImpl) Query(input string) int {
 
 	db.sendResponse(model.BarcodeQueryMessage{
 		MessageType: model.DBQueryNoti,
-		Payload: QueryResult{
+		Payload: QueryIntResult{
 			DBRole:      db.DBRole,
 			QueryString: input,
 			QueryResult: -1,
