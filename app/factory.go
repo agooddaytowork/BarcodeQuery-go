@@ -127,6 +127,7 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 			TotalCounter:             0,
 			PackageCounter:           0,
 			NumberOfItemInExistingDB: 0,
+			NumberOfCameraScanError:  0,
 		},
 		Broadcaster:    dbBroadCast,
 		ClientListener: clientBroadCast.Listen(),

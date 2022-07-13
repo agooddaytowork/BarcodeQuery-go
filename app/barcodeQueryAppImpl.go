@@ -48,6 +48,7 @@ func (app *BarcodeQueryAppImpl) handleAppReset() {
 	app.CounterReport.TotalCounter = 0
 	app.CounterReport.QueryCounter = 0
 	app.CounterReport.PackageCounter = 0
+	app.CounterReport.NumberOfCameraScanError = 0
 	app.CounterReport.NumberOfItemInExistingDB = app.BarcodeExistingDB.GetDBLength()
 	app.sendResponse(model.ResetAppResponse, "ok")
 	app.sendResponse(model.CounterReportResponse, app.CounterReport)
@@ -141,9 +142,9 @@ func (app *BarcodeQueryAppImpl) Run() {
 	for run {
 		barcode := app.Reader.Read()
 		if barcode == CAMERA_ERROR_1 {
-			// trigger actuator
-			// send response
+			app.CounterReport.NumberOfCameraScanError++
 			app.sendResponse(model.SetCameraErrorActuatorResponse, true)
+			app.sendResponse(model.CounterReportResponse, app.CounterReport)
 			continue
 		}
 		existingDBResult := app.BarcodeExistingDB.Query(barcode)
