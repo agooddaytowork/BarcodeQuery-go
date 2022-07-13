@@ -49,7 +49,7 @@ func (app *BarcodeQueryAppImpl) handleAppReset() {
 	app.CounterReport.QueryCounter = 0
 	app.CounterReport.PackageCounter = 0
 	app.CounterReport.NumberOfItemInExistingDB = app.BarcodeExistingDB.GetDBLength()
-	app.sendResponse(model.RestAppResponse, "ok")
+	app.sendResponse(model.ResetAppResponse, "ok")
 	app.sendResponse(model.CounterReportResponse, app.CounterReport)
 }
 
@@ -160,7 +160,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 			// found barcode
 			// do something
 
-			serialNumber := app.SerialAndBarcodeDB.Query(barcode)
+			serialNumber := app.BarcodeAndSerialDB.Query(barcode)
 
 			app.ScannedDB.Insert(serialNumber, 0)
 			app.PersistedScannedDB.Insert(serialNumber, 0)
@@ -169,13 +169,15 @@ func (app *BarcodeQueryAppImpl) Run() {
 			app.CounterReport.TotalCounter++
 		} else {
 			// found duplicated query
-			serialNumber := app.SerialAndBarcodeDB.Query(barcode)
+			serialNumber := app.BarcodeAndSerialDB.Query(barcode)
 			duplicateQuery := app.DuplicatedItemDB.Query(serialNumber)
 			if duplicateQuery == -1 {
 				app.DuplicatedItemDB.Insert(serialNumber, 0)
 			}
 			go app.Actuator.SetDuplicateActuatorState(actuator.OnState)
 			go app.sendResponse(model.SetDuplicateActuatorResponse, actuator.OnState)
+			app.CounterReport.QueryCounter++
+			app.CounterReport.TotalCounter++
 		}
 		if app.CounterReport.QueryCounter == app.CounterReport.QueryCounterLimit {
 			app.sendResponse(model.CurrentCounterHitLimitNoti, 0)

@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	configPath := flag.String("c", "test/config.json", "Config path")
+	configPath := flag.String("c", "test/config3.json", "Config path")
 	flag.Parse()
 
 	var theConfig app.BarcodeAppConfig

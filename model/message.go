@@ -15,7 +15,7 @@ const (
 	SetErrorActuatorRequest
 	SetErrorActuatorResponse
 	ResetAppRequest
-	RestAppResponse
+	ResetAppResponse
 	SetCurrentCounterLimitRequest
 	SetCurrentCounterLimitResponse
 	GetNumberOfItemInListRequest
