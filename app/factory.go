@@ -4,6 +4,7 @@ import (
 	"BarcodeQuery/actuator"
 	"BarcodeQuery/classifier"
 	"BarcodeQuery/db"
+	"BarcodeQuery/hashing"
 	"BarcodeQuery/model"
 	"BarcodeQuery/reader"
 	"fmt"
@@ -133,6 +134,7 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		ClientListener: clientBroadCast.Listen(),
 		Actuator:       &actuator.ConsoleActuator{},
 		Config:         config,
+		Hasher:         &hashing.BarcodeSHA256HasherImpl{},
 	}
 
 }

@@ -70,8 +70,8 @@ func (db *SerialNBarcodeHashStorageImpl) dump(inputPath string) *BarcodeDBError 
 		panic(err)
 	}
 
-	for key := range db.Store {
-		_, err := f.WriteString(key + "\n")
+	for key, value := range db.Store {
+		_, err := f.WriteString(key + "\t" + value + "\n")
 		if err != nil {
 			return &BarcodeDBError{
 				ExceptionMsg: err.Error(),
@@ -155,4 +155,5 @@ func (db *SerialNBarcodeHashStorageImpl) GetStore() map[string]string {
 }
 
 func (db *SerialNBarcodeHashStorageImpl) Sync(input map[string]string) {
+	db.Store = input
 }

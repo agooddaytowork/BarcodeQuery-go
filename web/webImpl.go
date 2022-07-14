@@ -1,6 +1,9 @@
 package web
 
 import (
+	"BarcodeQuery/classifier"
+	"BarcodeQuery/db"
+	"BarcodeQuery/hashing"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/textileio/go-threads/broadcast"
@@ -29,12 +32,39 @@ var upgrade = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
+func hashingSerialNBarcodeProductionFile(filePath string) {
+	log.Println("hashingSerialNBarcodeProductionFile")
+	barcodeNSerialDB := db.SerialNBarcodeHashStorageImpl{
+		DBRole:              db.BarcodeVsSerialDB,
+		FilePath:            filePath,
+		Store:               make(map[string]string),
+		Broadcaster:         nil,
+		ClientListener:      nil,
+		IgnoreClientRequest: true,
+	}
+
+	barcodeNSerialDB.Load(&classifier.SerialNBarcodeTupleClassifier{})
+	hasher := hashing.BarcodeSHA256HasherImpl{}
+	newStore := make(map[string]string)
+
+	for k, e := range barcodeNSerialDB.GetStore() {
+		hashValue := hasher.Hash(e)
+		log.Printf("%s : %s", e, hashValue)
+		newStore[k] = hashValue
+	}
+	barcodeNSerialDB.Sync(newStore)
+	barcodeNSerialDB.Dump()
+	log.Println("hashing complete")
+
+}
+
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }
 
 func (web *BarcodeQueryWebImpl) handleUploadList(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
+	log.Println("handleUploadList")
 	if r.Method == "POST" {
 		r.ParseMultipartForm(32 << 20)
 		file, handler, err := r.FormFile("danhsach")
@@ -51,6 +81,7 @@ func (web *BarcodeQueryWebImpl) handleUploadList(w http.ResponseWriter, r *http.
 		}
 		defer f.Close()
 		io.Copy(f, file)
+		hashingSerialNBarcodeProductionFile(web.BarcodeListFilePath)
 		w.WriteHeader(200)
 	}
 }

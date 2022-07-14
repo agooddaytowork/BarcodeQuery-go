@@ -4,6 +4,7 @@ import (
 	"BarcodeQuery/actuator"
 	"BarcodeQuery/classifier"
 	"BarcodeQuery/db"
+	"BarcodeQuery/hashing"
 	"BarcodeQuery/model"
 	"BarcodeQuery/reader"
 	"BarcodeQuery/util"
@@ -27,6 +28,7 @@ type BarcodeQueryAppImpl struct {
 	Actuator           actuator.BarcodeActuator
 	Config             BarcodeAppConfig
 	ConfigPath         string
+	Hasher             hashing.BarcodeHashser
 }
 
 func (app *BarcodeQueryAppImpl) sendResponse(msgType model.MessageType, payload any) {
@@ -145,13 +147,15 @@ func (app *BarcodeQueryAppImpl) Run() {
 
 	for run {
 		barcode := app.Reader.Read()
+		barcodeHash := app.Hasher.Hash(barcode)
+
 		if barcode == CAMERA_ERROR_1 {
 			app.CounterReport.NumberOfCameraScanError++
 			app.sendResponse(model.SetCameraErrorActuatorResponse, true)
 			app.sendResponse(model.CounterReportResponse, app.CounterReport)
 			continue
 		}
-		existingDBResult := app.BarcodeExistingDB.Query(barcode)
+		existingDBResult := app.BarcodeExistingDB.Query(barcodeHash)
 		if existingDBResult < 0 {
 			// not found in existing DB -> ERROR
 			errorQuery := app.ErrorDB.Query(barcode)
@@ -165,7 +169,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 			// found barcode
 			// do something
 
-			serialNumber := app.BarcodeAndSerialDB.Query(barcode)
+			serialNumber := app.BarcodeAndSerialDB.Query(barcodeHash)
 
 			app.ScannedDB.Insert(serialNumber, 0)
 			app.PersistedScannedDB.Insert(serialNumber, 0)
@@ -174,7 +178,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 			app.CounterReport.TotalCounter++
 		} else {
 			// found duplicated query
-			serialNumber := app.BarcodeAndSerialDB.Query(barcode)
+			serialNumber := app.BarcodeAndSerialDB.Query(barcodeHash)
 			duplicateQuery := app.DuplicatedItemDB.Query(serialNumber)
 			if duplicateQuery == -1 {
 				app.DuplicatedItemDB.Insert(serialNumber, 0)
@@ -188,7 +192,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 			app.sendResponse(model.CurrentCounterHitLimitNoti, 0)
 		}
 		app.sendResponse(model.CounterReportResponse, app.CounterReport)
-		log.Printf("Query result %s : %d \n", barcode, existingDBResult)
+		log.Printf("Query result %s : %d \n", barcodeHash, existingDBResult)
 	}
 
 	defer app.cleanUp()
