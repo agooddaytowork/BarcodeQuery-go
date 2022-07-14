@@ -49,7 +49,6 @@ func hashingSerialNBarcodeProductionFile(filePath string) {
 
 	for k, e := range barcodeNSerialDB.GetStore() {
 		hashValue := hasher.Hash(e)
-		log.Printf("%s : %s", e, hashValue)
 		newStore[k] = hashValue
 	}
 	barcodeNSerialDB.Sync(newStore)
