@@ -108,6 +108,7 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 		case model.ResetPersistedFileRequest:
 			app.PersistedScannedDB.Clear()
 			app.PersistedScannedDB.Dump()
+			app.handleAppReset()
 			app.sendResponse(model.ResetPersistedFileResponse, 1)
 		}
 	}
