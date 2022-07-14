@@ -56,6 +56,7 @@ func (app *BarcodeQueryAppImpl) handleAppReset() {
 	app.CounterReport.NumberOfItemInExistingDB = app.BarcodeExistingDB.GetDBLength()
 	app.sendResponse(model.ResetAppResponse, "ok")
 	app.sendResponse(model.CounterReportResponse, app.CounterReport)
+	app.syncPersistedScannedDBToExistingDB()
 }
 
 func (app *BarcodeQueryAppImpl) handleClientRequest() {
