@@ -40,8 +40,6 @@ func (app *BarcodeQueryAppImpl) sendResponse(msgType model.MessageType, payload 
 }
 
 func (app *BarcodeQueryAppImpl) handleAppReset() {
-	app.PersistedScannedDB.Clear()
-	app.PersistedScannedDB.Dump()
 	app.BarcodeExistingDB.Clear()
 	app.BarcodeExistingDB.Load(&classifier.BarcodeTupleClassifier{})
 	app.SerialAndBarcodeDB.Clear()
@@ -97,7 +95,6 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 			app.sendResponse(model.GetConfigResponse, app.Config)
 			app.sendResponse(model.CounterReportResponse, app.CounterReport)
 			util.DumpConfigToFile(app.ConfigPath, app.Config)
-
 		case model.ResetCurrentCounterRequest:
 			app.CounterReport.QueryCounter = 0
 			app.CounterReport.PackageCounter++
@@ -106,7 +103,11 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 		case model.SetCameraErrorActuatorRequest:
 			state := actuator.GetState(msg.Payload.(bool))
 			app.sendResponse(model.SetCameraErrorActuatorResponse, state)
-			// todo , add camera error actuator
+		// todo , add camera error actuator
+		case model.ResetPersistedFileRequest:
+			app.PersistedScannedDB.Clear()
+			app.PersistedScannedDB.Dump()
+			app.sendResponse(model.ResetPersistedFileResponse, 1)
 		}
 	}
 }
