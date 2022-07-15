@@ -7,4 +7,7 @@ const (
 	ErrorDBRole
 	DuplicatedHistoryDB
 	ScannedDB
+	PersitedDBRole
+	BarcodeVsSerialDB
+	SerialVsBarcodeDB
 )

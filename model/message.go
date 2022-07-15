@@ -15,7 +15,7 @@ const (
 	SetErrorActuatorRequest
 	SetErrorActuatorResponse
 	ResetAppRequest
-	RestAppResponse
+	ResetAppResponse
 	SetCurrentCounterLimitRequest
 	SetCurrentCounterLimitResponse
 	GetNumberOfItemInListRequest
@@ -33,6 +33,8 @@ const (
 	CurrentCounterHitLimitNoti
 	SetCameraErrorActuatorRequest
 	SetCameraErrorActuatorResponse
+	ResetPersistedFileRequest
+	ResetPersistedFileResponse
 )
 
 type BarcodeQueryMessage struct {
