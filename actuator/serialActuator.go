@@ -27,7 +27,7 @@ func (a *SerialActuator) fromStateToString(state ActuatorState) string {
 
 func (a *SerialActuator) sendActuatorStates(actuator1 string, actuator2 string) {
 	currentControlString := strings.ReplaceAll(controlString, "{actuator1State}", actuator1)
-	currentControlString = strings.ReplaceAll(controlString, "{actuator2State}", actuator2)
+	currentControlString = strings.ReplaceAll(currentControlString, "{actuator2State}", actuator2)
 
 	_, err := a.port.Write([]byte(currentControlString))
 	if err != nil {
