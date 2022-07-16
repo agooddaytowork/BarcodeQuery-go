@@ -57,6 +57,9 @@ func (handler *ClientHandlerImpl) provideCurrentStateToClient() {
 	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
 		MessageType: model2.GetConfigRequest,
 	})
+	handler.clientBroadcast.Send(model2.BarcodeQueryMessage{
+		MessageType: model2.GetTestModeStatusRequest,
+	})
 }
 
 func (handler *ClientHandlerImpl) handle() {

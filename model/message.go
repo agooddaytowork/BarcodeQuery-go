@@ -38,6 +38,10 @@ const (
 	DuplicatedItemNoti
 	GetDuplicatedItemsStateRequest
 	GetDuplicatedItemsStateResponse
+	SetTestModeRequest
+	SetTestModeResponse
+	GetTestModeStatusRequest
+	GetTestModeStatusResponse
 )
 
 type BarcodeQueryMessage struct {

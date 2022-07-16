@@ -137,6 +137,7 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		Actuator:       actuator,
 		Config:         config,
 		Hasher:         &hashing.BarcodeSHA256HasherImpl{},
+		TestMode:       false,
 	}
 
 }

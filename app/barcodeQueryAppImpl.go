@@ -33,6 +33,7 @@ type BarcodeQueryAppImpl struct {
 	Config             BarcodeAppConfig
 	ConfigPath         string
 	Hasher             hashing.BarcodeHashser
+	TestMode           bool
 }
 
 func (app *BarcodeQueryAppImpl) sendResponse(msgType model.MessageType, payload any) {
@@ -112,8 +113,10 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 			app.sendResponse(model.SetCameraErrorActuatorResponse, state)
 		// todo , add camera error actuator
 		case model.ResetPersistedFileRequest:
-			app.PersistedScannedDB.Clear()
-			app.PersistedScannedDB.Dump()
+			if !app.TestMode {
+				app.PersistedScannedDB.Clear()
+				app.PersistedScannedDB.Dump()
+			}
 			app.handleAppReset()
 			app.sendResponse(model.ResetPersistedFileResponse, 1)
 
@@ -125,6 +128,14 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 				}
 			}
 			app.sendResponse(model.GetDuplicatedItemsStateResponse, duplicatedItemsExistInPersistedRecord)
+
+		case model.SetTestModeRequest:
+			app.TestMode = msg.Payload.(bool)
+			app.sendResponse(model.SetTestModeResponse, app.TestMode)
+
+		case model.GetTestModeStatusRequest:
+			app.sendResponse(model.GetTestModeStatusResponse, app.TestMode)
+
 		}
 	}
 }
@@ -159,10 +170,14 @@ func (app *BarcodeQueryAppImpl) cleanUp() {
 	log.Println("Cleaning up")
 	app.sendResponse(model.ResetAllCountersResponse, 0)
 	app.CounterReport.QueryCounter = 0
-	app.PersistedScannedDB.Dump()
-	app.ScannedDB.DumpWithTimeStamp()
-	app.ErrorDB.DumpWithTimeStamp()
-	app.DuplicatedItemDB.DumpWithTimeStamp()
+
+	if !app.TestMode {
+		app.PersistedScannedDB.Dump()
+		app.ScannedDB.DumpWithTimeStamp()
+		app.ErrorDB.DumpWithTimeStamp()
+		app.DuplicatedItemDB.DumpWithTimeStamp()
+	}
+
 	app.ScannedDB.Clear()
 	app.ErrorDB.Clear()
 	app.DuplicatedItemDB.Clear()
