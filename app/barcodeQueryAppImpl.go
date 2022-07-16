@@ -108,6 +108,7 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 			app.sendResponse(model.CounterReportResponse, app.CounterReport)
 		case model.SetCameraErrorActuatorRequest:
 			state := actuator.GetState(msg.Payload.(bool))
+			app.Actuator.SetCameraErrorActuatorState(state)
 			app.sendResponse(model.SetCameraErrorActuatorResponse, state)
 		// todo , add camera error actuator
 		case model.ResetPersistedFileRequest:
@@ -193,6 +194,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 		barcodeHash := app.Hasher.Hash(barcode)
 
 		if barcode == CAMERA_ERROR_1 {
+			app.Actuator.SetCameraErrorActuatorState(actuator.OnState)
 			app.CounterReport.NumberOfCameraScanError++
 			app.sendResponse(model.SetCameraErrorActuatorResponse, true)
 			app.sendResponse(model.CounterReportResponse, app.CounterReport)

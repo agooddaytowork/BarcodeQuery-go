@@ -85,6 +85,8 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		ClientListener: clientBroadCast.Listen(),
 	}
 
+	actuator := actuator.GetActuator(theConfig.ActuatorType, theConfig.ActuatorURI)
+
 	if err != nil {
 		panic(err)
 	}
@@ -132,7 +134,7 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		},
 		Broadcaster:    dbBroadCast,
 		ClientListener: clientBroadCast.Listen(),
-		Actuator:       &actuator.ConsoleActuator{},
+		Actuator:       actuator,
 		Config:         config,
 		Hasher:         &hashing.BarcodeSHA256HasherImpl{},
 	}
