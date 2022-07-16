@@ -18,4 +18,5 @@ const (
 type BarcodeActuator interface {
 	SetDuplicateActuatorState(state ActuatorState)
 	SetErrorActuatorState(state ActuatorState)
+	SetCameraErrorActuatorState(state ActuatorState)
 }

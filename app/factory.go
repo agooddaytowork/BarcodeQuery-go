@@ -14,10 +14,10 @@ import (
 
 func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBroadCast *broadcast.Broadcaster, clientBroadCast *broadcast.Broadcaster, config BarcodeAppConfig) BarcodeQueryAppImpl {
 
-	persistedScanDB := db.SerialHashStorageImpl{
+	persistedScanDB := db.PersistedSerialRecordHashStorageImpl{
 		DBRole:              db.PersitedDBRole,
 		FilePath:            "persisted.txt",
-		Store:               make(map[string]int),
+		Store:               make(map[string]model.PersistedSerialRecord),
 		Broadcaster:         nil,
 		ClientListener:      nil,
 		IgnoreClientRequest: true,
@@ -85,6 +85,8 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		ClientListener: clientBroadCast.Listen(),
 	}
 
+	actuator := actuator.GetActuator(theConfig.ActuatorType, theConfig.ActuatorURI)
+
 	if err != nil {
 		panic(err)
 	}
@@ -132,9 +134,10 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		},
 		Broadcaster:    dbBroadCast,
 		ClientListener: clientBroadCast.Listen(),
-		Actuator:       &actuator.ConsoleActuator{},
+		Actuator:       actuator,
 		Config:         config,
 		Hasher:         &hashing.BarcodeSHA256HasherImpl{},
+		TestMode:       false,
 	}
 
 }

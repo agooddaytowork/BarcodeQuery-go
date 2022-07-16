@@ -35,6 +35,13 @@ const (
 	SetCameraErrorActuatorResponse
 	ResetPersistedFileRequest
 	ResetPersistedFileResponse
+	DuplicatedItemNoti
+	GetDuplicatedItemsStateRequest
+	GetDuplicatedItemsStateResponse
+	SetTestModeRequest
+	SetTestModeResponse
+	GetTestModeStatusRequest
+	GetTestModeStatusResponse
 )
 
 type BarcodeQueryMessage struct {

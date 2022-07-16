@@ -9,8 +9,12 @@ import (
 	"BarcodeQuery/reader"
 	"BarcodeQuery/util"
 	"encoding/json"
+	"fmt"
 	"github.com/textileio/go-threads/broadcast"
 	"log"
+	"sort"
+	"strconv"
+	"time"
 )
 
 type BarcodeQueryAppImpl struct {
@@ -20,7 +24,7 @@ type BarcodeQueryAppImpl struct {
 	DuplicatedItemDB   db.SerialDB
 	ErrorDB            db.SerialDB
 	ScannedDB          db.SerialDB
-	PersistedScannedDB db.SerialDB
+	PersistedScannedDB db.PersistedSerialRecordDB
 	Reader             reader.BarcodeReader
 	CounterReport      model.CounterReport
 	Broadcaster        *broadcast.Broadcaster
@@ -29,6 +33,7 @@ type BarcodeQueryAppImpl struct {
 	Config             BarcodeAppConfig
 	ConfigPath         string
 	Hasher             hashing.BarcodeHashser
+	TestMode           bool
 }
 
 func (app *BarcodeQueryAppImpl) sendResponse(msgType model.MessageType, payload any) {
@@ -99,18 +104,65 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 		case model.ResetCurrentCounterRequest:
 			app.CounterReport.QueryCounter = 0
 			app.CounterReport.PackageCounter++
+			app.syncScannedDataToPersistedStorage()
 			app.cleanUp()
 			app.sendResponse(model.CounterReportResponse, app.CounterReport)
 		case model.SetCameraErrorActuatorRequest:
 			state := actuator.GetState(msg.Payload.(bool))
+			app.Actuator.SetCameraErrorActuatorState(state)
 			app.sendResponse(model.SetCameraErrorActuatorResponse, state)
 		// todo , add camera error actuator
 		case model.ResetPersistedFileRequest:
-			app.PersistedScannedDB.Clear()
-			app.PersistedScannedDB.Dump()
+			if !app.TestMode {
+				app.PersistedScannedDB.Clear()
+				app.PersistedScannedDB.Dump()
+			}
 			app.handleAppReset()
 			app.sendResponse(model.ResetPersistedFileResponse, 1)
+
+		case model.GetDuplicatedItemsStateRequest:
+			var duplicatedItemsExistInPersistedRecord []model.PersistedSerialRecord
+			for v := range app.DuplicatedItemDB.GetStore() {
+				if persistedRecord, ok := app.PersistedScannedDB.Query(v); ok {
+					duplicatedItemsExistInPersistedRecord = append(duplicatedItemsExistInPersistedRecord, persistedRecord)
+				}
+			}
+			app.sendResponse(model.GetDuplicatedItemsStateResponse, duplicatedItemsExistInPersistedRecord)
+
+		case model.SetTestModeRequest:
+			app.TestMode = msg.Payload.(bool)
+			app.sendResponse(model.SetTestModeResponse, app.TestMode)
+
+		case model.GetTestModeStatusRequest:
+			app.sendResponse(model.GetTestModeStatusResponse, app.TestMode)
+
 		}
+	}
+}
+
+// This function is only valid when counter limit is hit
+func (app *BarcodeQueryAppImpl) getLotIdentifier() string {
+	data := app.ScannedDB.GetStoreAsQueryResultArray()
+	sort.Slice(data, func(i, j int) bool {
+		return data[i].QueryString < data[j].QueryString
+	})
+
+	start, _ := strconv.Atoi(data[0].QueryString)
+	stop, _ := strconv.Atoi(data[len(data)-1].QueryString)
+	return fmt.Sprintf("%d-%d", start, stop)
+}
+
+func (app *BarcodeQueryAppImpl) syncScannedDataToPersistedStorage() {
+	// get lot number
+	lotIdentifier := app.getLotIdentifier()
+	log.Printf("lotIdentifier: %s", lotIdentifier)
+
+	for serialNumber := range app.ScannedDB.GetStore() {
+		app.PersistedScannedDB.Insert(serialNumber, model.PersistedSerialRecord{
+			Serial:           serialNumber,
+			ScannedTimestamp: time.Now().Unix(),
+			Lot:              lotIdentifier,
+		})
 	}
 }
 
@@ -118,10 +170,14 @@ func (app *BarcodeQueryAppImpl) cleanUp() {
 	log.Println("Cleaning up")
 	app.sendResponse(model.ResetAllCountersResponse, 0)
 	app.CounterReport.QueryCounter = 0
-	app.PersistedScannedDB.Dump()
-	app.ScannedDB.DumpWithTimeStamp()
-	app.ErrorDB.DumpWithTimeStamp()
-	app.DuplicatedItemDB.DumpWithTimeStamp()
+
+	if !app.TestMode {
+		app.PersistedScannedDB.Dump()
+		app.ScannedDB.DumpWithTimeStamp()
+		app.ErrorDB.DumpWithTimeStamp()
+		app.DuplicatedItemDB.DumpWithTimeStamp()
+	}
+
 	app.ScannedDB.Clear()
 	app.ErrorDB.Clear()
 	app.DuplicatedItemDB.Clear()
@@ -153,6 +209,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 		barcodeHash := app.Hasher.Hash(barcode)
 
 		if barcode == CAMERA_ERROR_1 {
+			app.Actuator.SetCameraErrorActuatorState(actuator.OnState)
 			app.CounterReport.NumberOfCameraScanError++
 			app.sendResponse(model.SetCameraErrorActuatorResponse, true)
 			app.sendResponse(model.CounterReportResponse, app.CounterReport)
@@ -175,7 +232,7 @@ func (app *BarcodeQueryAppImpl) Run() {
 			serialNumber := app.BarcodeAndSerialDB.Query(barcodeHash)
 
 			app.ScannedDB.Insert(serialNumber, 0)
-			app.PersistedScannedDB.Insert(serialNumber, 0)
+			//app.PersistedScannedDB.Insert(serialNumber, 0)
 			app.ScannedDB.Query(serialNumber)
 			app.CounterReport.QueryCounter++
 			app.CounterReport.TotalCounter++
@@ -183,16 +240,22 @@ func (app *BarcodeQueryAppImpl) Run() {
 			// found duplicated query
 			serialNumber := app.BarcodeAndSerialDB.Query(barcodeHash)
 			duplicateQuery := app.DuplicatedItemDB.Query(serialNumber)
+			persistedRecord, _ := app.PersistedScannedDB.Query(serialNumber)
+
 			if duplicateQuery == -1 {
 				app.DuplicatedItemDB.Insert(serialNumber, 0)
 			}
+
 			go app.Actuator.SetDuplicateActuatorState(actuator.OnState)
 			go app.sendResponse(model.SetDuplicateActuatorResponse, actuator.OnState)
+			go app.sendResponse(model.DuplicatedItemNoti, persistedRecord)
 			app.CounterReport.QueryCounter++
 			app.CounterReport.TotalCounter++
 		}
 		if app.CounterReport.QueryCounter == app.CounterReport.QueryCounterLimit {
-			app.sendResponse(model.CurrentCounterHitLimitNoti, 0)
+			app.sendResponse(model.CurrentCounterHitLimitNoti, model.CounterHitLimitPayload{
+				LotIdentifier: app.getLotIdentifier(),
+			})
 		}
 		app.sendResponse(model.CounterReportResponse, app.CounterReport)
 		log.Printf("Query result %s : %d \n", barcodeHash, existingDBResult)

@@ -16,4 +16,6 @@ type BarcodeAppConfig struct {
 	EnableSoundAlert  bool              `json:"enable_sound_alert"`
 	AutoResetActuator bool              `json:"auto_reset_actuator"`
 	WebStaticFilePath string            `json:"web_static_file_path"`
+	ActuatorType      string            `json:"actuator_type"`
+	ActuatorURI       string            `json:"actuator_uri"`
 }

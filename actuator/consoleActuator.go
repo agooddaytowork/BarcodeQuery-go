@@ -12,3 +12,7 @@ func (a *ConsoleActuator) SetDuplicateActuatorState(state ActuatorState) {
 func (a *ConsoleActuator) SetErrorActuatorState(state ActuatorState) {
 	log.Println("SetErrorActuatorState", state)
 }
+
+func (a *ConsoleActuator) SetCameraErrorActuatorState(state ActuatorState) {
+	log.Println("SetCameraErrorActuatorState", state)
+}
