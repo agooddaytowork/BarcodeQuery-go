@@ -10,5 +10,6 @@
     "enable_sound_alert": true,
     "auto_reset_actuator": false,
     "web_static_file_path": "local/web",
-    ""
+    "actuator_type": "console",
+    "actuator_uri": "none"
 }
