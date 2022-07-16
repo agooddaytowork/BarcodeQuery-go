@@ -147,6 +147,10 @@ func (app *BarcodeQueryAppImpl) getLotIdentifier() string {
 		return data[i].QueryString < data[j].QueryString
 	})
 
+	if len(data) == 0 {
+		return ""
+	}
+
 	start, _ := strconv.Atoi(data[0].QueryString)
 	stop, _ := strconv.Atoi(data[len(data)-1].QueryString)
 	return fmt.Sprintf("%d-%d", start, stop)
