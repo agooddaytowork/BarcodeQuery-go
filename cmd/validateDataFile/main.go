@@ -23,7 +23,7 @@ func main() {
 	if err != nil {
 		log.Fatal("lỗi đọc file", err)
 	}
-	elements := strings.Split(string(data), "\r")
+	elements := strings.Split(string(data), "\n")
 
 	var serialDupFrequency = make(map[string]int)
 	var barcodeDupFrequency = make(map[string]int)
