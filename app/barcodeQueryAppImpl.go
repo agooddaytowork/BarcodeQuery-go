@@ -109,8 +109,8 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 			app.sendResponse(model.CounterReportResponse, app.CounterReport)
 		case model.ResetCurrentCounterRequest:
 			app.CounterReport.QueryCounter = 0
-			app.syncScannedDataToPersistedStorage()
-			app.cleanUp()
+			//app.syncScannedDataToPersistedStorage()
+			app.handleCurrentCounterReset()
 			app.sendResponse(model.CounterReportResponse, app.CounterReport)
 		case model.SetCameraErrorActuatorRequest:
 			state := actuator.GetState(msg.Payload.(bool))
@@ -190,6 +190,22 @@ func (app *BarcodeQueryAppImpl) cleanUp() {
 	app.ScannedDB.Clear()
 	app.ErrorDB.Clear()
 	app.DuplicatedItemDB.Clear()
+}
+
+func (app *BarcodeQueryAppImpl) handleCurrentCounterReset() {
+	app.CounterReport.QueryCounter = 0
+
+	app.BarcodeExistingDB.Clear()
+	app.BarcodeExistingDB.Load(&classifier.BarcodeTupleClassifier{})
+	app.SerialAndBarcodeDB.Clear()
+	app.SerialAndBarcodeDB.Load(&classifier.SerialNBarcodeTupleClassifier{})
+	app.BarcodeAndSerialDB.Clear()
+	app.BarcodeAndSerialDB.Load(&classifier.BarcodeNSerialTupleClassifier{})
+	app.ScannedDB.Clear()
+	app.ErrorDB.Clear()
+	app.DuplicatedItemDB.Clear()
+	app.syncPersistedScannedDBToExistingDB()
+	app.sendResponse(model.ResetCurrentCounterResponse, 0)
 }
 
 func (app *BarcodeQueryAppImpl) syncPersistedScannedDBToExistingDB() {
