@@ -101,9 +101,14 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 			app.sendResponse(model.GetConfigResponse, app.Config)
 			app.sendResponse(model.CounterReportResponse, app.CounterReport)
 			util.DumpConfigToFile(app.ConfigPath, app.Config)
-		case model.ResetCurrentCounterRequest:
+		case model.CloseCurrentLotRequest:
 			app.CounterReport.QueryCounter = 0
 			app.CounterReport.PackageCounter++
+			app.syncScannedDataToPersistedStorage()
+			app.cleanUp()
+			app.sendResponse(model.CounterReportResponse, app.CounterReport)
+		case model.ResetCurrentCounterRequest:
+			app.CounterReport.QueryCounter = 0
 			app.syncScannedDataToPersistedStorage()
 			app.cleanUp()
 			app.sendResponse(model.CounterReportResponse, app.CounterReport)
