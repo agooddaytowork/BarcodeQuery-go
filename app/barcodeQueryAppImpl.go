@@ -324,14 +324,14 @@ func (app *BarcodeQueryAppImpl) Run() {
 			app.sendResponse(model.CurrentCounterHitLimitNoti, model.CounterHitLimitPayload{
 				LotIdentifier: app.getLotIdentifier(),
 			})
-			util.DumpConfigToFile("debug/debug-"+strconv.FormatInt(time.Now().Unix(), 10)+".txt", debugArray)
+			util.DumpConfigToFile("debug/debug-"+strconv.FormatInt(time.Now().Unix(), 10)+".json", debugArray)
 		}
 		app.sendResponse(model.CounterReportResponse, app.CounterReport)
 		log.Printf("Query result %s : %d \n", barcodeHash, existingDBResult)
 	}
 
 	defer func() {
-		util.DumpConfigToFile("debug/debug-"+strconv.FormatInt(time.Now().Unix(), 10)+".txt", debugArray)
+		util.DumpConfigToFile("debug/debug-"+strconv.FormatInt(time.Now().Unix(), 10)+".json", debugArray)
 		app.cleanUp()
 	}()
 }
