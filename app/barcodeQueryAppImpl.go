@@ -236,6 +236,10 @@ func (app *BarcodeQueryAppImpl) Run() {
 		barcode := app.Reader.Read()
 		barcodeHash := app.Hasher.Hash(barcode)
 
+		if barcode == "" {
+			continue
+		}
+
 		if barcode == CAMERA_ERROR_1 {
 
 			if app.Config.DebugMode {
