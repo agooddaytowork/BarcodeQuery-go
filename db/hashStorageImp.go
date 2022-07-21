@@ -3,7 +3,6 @@ package db
 import (
 	"BarcodeQuery/classifier"
 	"BarcodeQuery/model"
-	"fmt"
 	"github.com/textileio/go-threads/broadcast"
 	"log"
 	"os"
@@ -118,13 +117,12 @@ func (db *SerialHashStorageImpl) DumpWithTimeStamp() *BarcodeDBError {
 
 func (db *SerialHashStorageImpl) Insert(input string, queriedValue int) *BarcodeDBError {
 
-	if _, ok := db.Store[input]; !ok {
+	if v, ok := db.Store[input]; ok {
+		db.Store[input] = v + 1
+		return nil
+	} else {
 		db.Store[input] = queriedValue
 		return nil
-	}
-
-	return &BarcodeDBError{
-		ExceptionMsg: fmt.Sprintf("value %s exist", input),
 	}
 }
 

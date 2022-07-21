@@ -18,4 +18,5 @@ type BarcodeAppConfig struct {
 	WebStaticFilePath string            `json:"web_static_file_path"`
 	ActuatorType      string            `json:"actuator_type"`
 	ActuatorURI       string            `json:"actuator_uri"`
+	DebugMode         bool              `json:"debug_mode"`
 }
