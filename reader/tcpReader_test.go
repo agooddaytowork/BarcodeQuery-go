@@ -30,10 +30,11 @@ func TestTcpReader(t *testing.T) {
 	reportChannel := make(chan string, 1000)
 
 	tcpReader := TCPReader{
-		URL:           "localhost:9000",
-		client:        nil,
-		SpawnedThread: false,
-		ReportChannel: reportChannel,
+		URL:                         "localhost:9000",
+		client:                      nil,
+		SpawnedThread:               false,
+		ReportChannel:               reportChannel,
+		DuplicateDebounceIntervalMs: 500,
 	}
 
 	result := make(map[string]int)
@@ -52,7 +53,7 @@ func TestTcpReader(t *testing.T) {
 		fmt.Println(i)
 	}
 
-	if len(result) != 10000 {
+	if len(result) != 100 {
 		t.Error("expected result has 100 items")
 	}
 }

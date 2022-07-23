@@ -9,10 +9,11 @@ import (
 )
 
 type TCPReader struct {
-	URL           string
-	client        *net.Conn
-	SpawnedThread bool
-	ReportChannel chan string
+	URL                         string
+	client                      *net.Conn
+	SpawnedThread               bool
+	ReportChannel               chan string
+	DuplicateDebounceIntervalMs int
 }
 
 func (r *TCPReader) connect() {
@@ -40,6 +41,8 @@ func (r *TCPReader) readAsync() {
 	r.connect()
 
 	run := true
+	previousStatus := ""
+	previousStatusTimestamp := time.Now().UnixMilli()
 
 	for run {
 		log.Printf("Wait for input from %s ...", r.URL)
@@ -51,7 +54,14 @@ func (r *TCPReader) readAsync() {
 			run = false
 			r.ReportChannel <- ""
 		} else {
-			r.ReportChannel <- status
+			if previousStatus == status && (time.Now().UnixMilli()-previousStatusTimestamp) < int64(r.DuplicateDebounceIntervalMs) {
+				log.Println("Found duplicated status within defined duplicate debounce interval, will not send out status")
+				previousStatusTimestamp = time.Now().UnixMilli()
+			} else {
+				previousStatus = status
+				previousStatusTimestamp = time.Now().UnixMilli()
+				r.ReportChannel <- status
+			}
 		}
 	}
 }
