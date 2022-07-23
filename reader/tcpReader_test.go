@@ -22,7 +22,7 @@ func TestTcpReader(t *testing.T) {
 
 		for i := 0; i < 100; i++ {
 			conn.Write([]byte(fmt.Sprintf("%0.12d\n", i)))
-			time.Sleep(50 * time.Millisecond)
+			time.Sleep(1 * time.Millisecond)
 		}
 		conn.Close()
 	}()
@@ -50,5 +50,9 @@ func TestTcpReader(t *testing.T) {
 		}
 		i++
 		fmt.Println(i)
+	}
+
+	if len(result) != 100 {
+		t.Error("expected result has 100 items")
 	}
 }
