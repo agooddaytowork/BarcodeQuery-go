@@ -302,7 +302,16 @@ func (app *BarcodeQueryAppImpl) Run() {
 			// found duplicated query
 			serialNumber := app.BarcodeAndSerialDB.Query(barcodeHash)
 			duplicateQuery := app.DuplicatedItemDB.Query(serialNumber)
-			persistedRecord, _ := app.PersistedScannedDB.Query(serialNumber)
+			var persistedRecord model.PersistedSerialRecord
+			if record, ok := app.PersistedScannedDB.Query(serialNumber); ok {
+				persistedRecord = record
+			} else {
+				persistedRecord = model.PersistedSerialRecord{
+					Serial:           serialNumber,
+					ScannedTimestamp: time.Now().Unix(),
+					Lot:              "Lô hiện tại",
+				}
+			}
 
 			if duplicateQuery == -1 {
 				app.DuplicatedItemDB.Insert(serialNumber, 0)
@@ -325,10 +334,13 @@ func (app *BarcodeQueryAppImpl) Run() {
 			}
 		}
 		if app.CounterReport.QueryCounter == app.CounterReport.QueryCounterLimit {
+			if debugArray != nil && len(debugArray) > 0 {
+				util.DumpConfigToFile("debug/debug-"+strconv.FormatInt(time.Now().Unix(), 10)+".json", debugArray)
+				debugArray = nil
+			}
 			app.sendResponse(model.CurrentCounterHitLimitNoti, model.CounterHitLimitPayload{
 				LotIdentifier: app.getLotIdentifier(),
 			})
-			util.DumpConfigToFile("debug/debug-"+strconv.FormatInt(time.Now().Unix(), 10)+".json", debugArray)
 		}
 		app.sendResponse(model.CounterReportResponse, app.CounterReport)
 		log.Printf("Query result %s : %d \n", barcodeHash, existingDBResult)
