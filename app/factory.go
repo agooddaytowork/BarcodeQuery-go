@@ -106,9 +106,10 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 
 	case reader.TCPReaderType:
 		theReader = &reader.TCPReader{
-			URL:           theConfig.ReaderURI,
-			SpawnedThread: false,
-			ReportChannel: make(chan string, 1000),
+			URL:                         theConfig.ReaderURI,
+			SpawnedThread:               false,
+			ReportChannel:               make(chan string, 1000),
+			DuplicateDebounceIntervalMs: theConfig.ReaderDuplicateDebounceIntervalMs,
 		}
 	default:
 		panic(fmt.Sprintf("Unsupported reader, only support %s/%s/%s", reader.TestFileReaderType, reader.ConsoleReaderType, reader.TCPReaderType))

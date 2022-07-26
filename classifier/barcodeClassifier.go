@@ -13,7 +13,7 @@ func (c *barcodeClassifier) Classify(input string) string {
 		return input
 	}
 	multiStrings := strings.Split(input, "\t")
-	if len(multiStrings) != 2 {
+	if len(multiStrings) < 2 {
 		panic(fmt.Sprintf("invalid input %s, barcodeClassifier input must be <serialnumber>\t<barcode>", input))
 	}
 	output := strings.ReplaceAll(multiStrings[1], "\r", "")

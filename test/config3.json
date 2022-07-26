@@ -5,11 +5,12 @@
     "duplicated_db_path": "local/duplicated.txt",
     "reader_type": "tcp_reader",
     "reader_uri": "localhost:9000",
-    "query_counter_limit": 6,
+    "query_counter_limit": 3,
     "enable_actuator": true,
     "enable_sound_alert": true,
     "auto_reset_actuator": false,
     "web_static_file_path": "local/web",
     "actuator_type": "console",
-    "actuator_uri": "none"
+    "actuator_uri": "none",
+    "debug_mode": true
 }
