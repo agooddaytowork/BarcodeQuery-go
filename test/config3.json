@@ -3,8 +3,10 @@
     "error_db_path": "local/error.txt",
     "scanned_db_path": "local/scanned.txt",
     "duplicated_db_path": "local/duplicated.txt",
-    "reader_type": "tcp_reader",
-    "reader_uri": "localhost:9000",
+    "barcode_reader_type": "tcp_reader",
+    "barcode_reader_uri": "localhost:9000",
+    "validate_lot_reader_type": "tcp_reader",
+    "validate_lot_reader_uri": "localhost:9001",
     "query_counter_limit": 3,
     "enable_actuator": true,
     "enable_sound_alert": true,
@@ -12,5 +14,6 @@
     "web_static_file_path": "local/web",
     "actuator_type": "console",
     "actuator_uri": "none",
-    "debug_mode": true
+    "debug_mode": true,
+    "validate_lot": true
 }

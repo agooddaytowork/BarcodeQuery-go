@@ -84,6 +84,8 @@ func (app *BarcodeQueryAppImpl) handleClientRequest() {
 		case model.GetTestModeStatusRequest:
 			app.sendResponse(model.GetTestModeStatusResponse, app.TestMode)
 
+		case model.TerminateValidateLotModeResponse:
+			app.ValidateModeTerminateSignal <- 1
 		}
 	}
 }

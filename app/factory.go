@@ -7,9 +7,7 @@ import (
 	"BarcodeQuery/hashing"
 	"BarcodeQuery/model"
 	"BarcodeQuery/reader"
-	"fmt"
 	"github.com/textileio/go-threads/broadcast"
-	"time"
 )
 
 func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBroadCast *broadcast.Broadcaster, clientBroadCast *broadcast.Broadcaster, config BarcodeAppConfig) BarcodeQueryAppImpl {
@@ -91,40 +89,26 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		panic(err)
 	}
 
-	// get the reader
-	var theReader reader.BarcodeReader
-	switch theConfig.ReaderType {
-	case reader.TestFileReaderType:
-		testFileReader := reader.TestFileReader{
-			Interval: time.Millisecond * 200,
-		}
-		testFileReader.Load(theConfig.ReaderURI)
-		theReader = &testFileReader
+	// get the barcode reader
+	barcodeReader := reader.NewReader(theConfig.BarcodeReaderType, theConfig.BarcodeReaderURI, theConfig.ReaderDuplicateDebounceIntervalMs)
 
-	case reader.ConsoleReaderType:
-		theReader = &reader.ConsoleReader{}
-
-	case reader.TCPReaderType:
-		theReader = &reader.TCPReader{
-			URL:                         theConfig.ReaderURI,
-			SpawnedThread:               false,
-			ReportChannel:               make(chan string, 1000),
-			DuplicateDebounceIntervalMs: theConfig.ReaderDuplicateDebounceIntervalMs,
-		}
-	default:
-		panic(fmt.Sprintf("Unsupported reader, only support %s/%s/%s", reader.TestFileReaderType, reader.ConsoleReaderType, reader.TCPReaderType))
+	var validateLotReader reader.BarcodeReader
+	if theConfig.ValidateLot {
+		validateLotReader = reader.NewReader(theConfig.ValidateLotReaderType, theConfig.ValidateLotReaderURI, theConfig.ReaderDuplicateDebounceIntervalMs)
 	}
+
 	// init the program
 	return BarcodeQueryAppImpl{
-		PersistedScannedDB: &persistedScanDB,
-		BarcodeExistingDB:  &barcodeExistingDB,
-		ErrorDB:            &errorDB,
-		DuplicatedItemDB:   &duplicatedHistoryDbB,
-		BarcodeAndSerialDB: &barcodeNSerialDB,
-		SerialAndBarcodeDB: &serialNBarcodeDB,
-		ScannedDB:          &scannedDB,
-		MainBarcodeReader:  theReader,
-		ConfigPath:         configPath,
+		PersistedScannedDB:       &persistedScanDB,
+		BarcodeExistingDB:        &barcodeExistingDB,
+		ErrorDB:                  &errorDB,
+		DuplicatedItemDB:         &duplicatedHistoryDbB,
+		BarcodeAndSerialDB:       &barcodeNSerialDB,
+		SerialAndBarcodeDB:       &serialNBarcodeDB,
+		ScannedDB:                &scannedDB,
+		MainBarcodeReader:        barcodeReader,
+		ValidateLotBarcodeReader: validateLotReader,
+		ConfigPath:               configPath,
 		CounterReport: model.CounterReport{
 			QueryCounter:             0,
 			QueryCounterLimit:        theConfig.QueryCounterLimit,
@@ -133,12 +117,13 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 			NumberOfItemInExistingDB: 0,
 			NumberOfCameraScanError:  0,
 		},
-		Broadcaster:    dbBroadCast,
-		ClientListener: clientBroadCast.Listen(),
-		Actuator:       actuator,
-		Config:         config,
-		Hasher:         &hashing.BarcodeSHA256HasherImpl{},
-		TestMode:       false,
+		Broadcaster:                 dbBroadCast,
+		ClientListener:              clientBroadCast.Listen(),
+		Actuator:                    actuator,
+		Config:                      config,
+		Hasher:                      &hashing.BarcodeSHA256HasherImpl{},
+		TestMode:                    false,
+		ValidateModeTerminateSignal: make(chan interface{}, 10),
 	}
 
 }

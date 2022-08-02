@@ -13,29 +13,31 @@ import (
 	"log"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
 type BarcodeQueryAppImpl struct {
-	BarcodeExistingDB     db.SerialDB
-	SerialAndBarcodeDB    db.SerialNBarcodeDB
-	BarcodeAndSerialDB    db.SerialNBarcodeDB
-	DuplicatedItemDB      db.SerialDB
-	DebugDB               db.SerialDB
-	ErrorDB               db.SerialDB
-	ScannedDB             db.SerialDB
-	PersistedScannedDB    db.PersistedSerialRecordDB
-	MainBarcodeReader     reader.BarcodeReader
-	ValidateBarcodeReader reader.BarcodeReader
-	CounterReport         model.CounterReport
-	Broadcaster           *broadcast.Broadcaster
-	ClientListener        *broadcast.Listener
-	Actuator              actuator.BarcodeActuator
-	Config                BarcodeAppConfig
-	ConfigPath            string
-	Hasher                hashing.BarcodeHashser
-	TestMode              bool
-	RunMode               string
+	BarcodeExistingDB           db.SerialDB
+	SerialAndBarcodeDB          db.SerialNBarcodeDB
+	BarcodeAndSerialDB          db.SerialNBarcodeDB
+	DuplicatedItemDB            db.SerialDB
+	DebugDB                     db.SerialDB
+	ErrorDB                     db.SerialDB
+	ScannedDB                   db.SerialDB
+	PersistedScannedDB          db.PersistedSerialRecordDB
+	MainBarcodeReader           reader.BarcodeReader
+	ValidateLotBarcodeReader    reader.BarcodeReader
+	CounterReport               model.CounterReport
+	Broadcaster                 *broadcast.Broadcaster
+	ClientListener              *broadcast.Listener
+	Actuator                    actuator.BarcodeActuator
+	Config                      BarcodeAppConfig
+	ConfigPath                  string
+	Hasher                      hashing.BarcodeHashser
+	TestMode                    bool
+	RunMode                     string
+	ValidateModeTerminateSignal chan interface{}
 }
 
 func (app *BarcodeQueryAppImpl) sendResponse(msgType model.MessageType, payload any) {
@@ -244,6 +246,8 @@ func (app *BarcodeQueryAppImpl) mainLogic() {
 				})
 			}
 		}
+		app.sendResponse(model.CounterReportResponse, app.CounterReport)
+
 		if app.CounterReport.QueryCounter == app.CounterReport.QueryCounterLimit {
 			if debugArray != nil && len(debugArray) > 0 {
 				util.DumpConfigToFile("debug/debug-"+strconv.FormatInt(time.Now().Unix(), 10)+".json", debugArray)
@@ -252,11 +256,10 @@ func (app *BarcodeQueryAppImpl) mainLogic() {
 			app.sendResponse(model.CurrentCounterHitLimitNoti, model.CounterHitLimitPayload{
 				LotIdentifier: app.getLotIdentifier(),
 			})
-			if app.RunMode == "with_lot_validator" {
+			if app.Config.ValidateLot {
 				app.runValidateMode()
 			}
 		}
-		app.sendResponse(model.CounterReportResponse, app.CounterReport)
 		log.Printf("Query result %s : %d \n", barcodeHash, existingDBResult)
 	}
 	util.DumpConfigToFile("debug/debug-"+strconv.FormatInt(time.Now().Unix(), 10)+".json", debugArray)
@@ -268,23 +271,49 @@ func (app *BarcodeQueryAppImpl) runValidateMode() {
 	app.sendResponse(model.ValidateLotStartNoti, 1)
 
 	go func() {
-		// TODO add a terminate validate mode signal here
+		<-app.ValidateModeTerminateSignal
 		run = false
 	}()
 	for run {
-		validateString := app.ValidateBarcodeReader.Read()
-		err := app.validateLot(validateString)
+		validateString := app.ValidateLotBarcodeReader.Read()
+		app.sendResponse(model.ValidateStringResponse, validateString)
+		unexpectedSerialNumbers, err := app.validateLot(validateString)
 		if err == nil {
-			app.sendResponse(model.ValidateLotStartNoti, true)
 			break
-		} else {
-			app.sendResponse(model.ValidateLotStartNoti, false)
 		}
+		app.sendResponse(model.ValidateLotResponse, model.ValidateLotResponsePayload{
+			UnexpectedSerialNumbers: *unexpectedSerialNumbers,
+			ErrorDetails:            err.Error(),
+		})
 	}
 }
 
-func (app *BarcodeQueryAppImpl) validateLot(validateString string) error {
-	return nil
+func (app *BarcodeQueryAppImpl) validateLot(validateString string) (*[]string, error) {
+
+	elements := strings.Split(validateString, "-")
+
+	from, err := strconv.Atoi(elements[0])
+
+	if err != nil {
+		return nil, err
+	}
+
+	to, err := strconv.Atoi(elements[1])
+	if err != nil {
+		return nil, err
+	}
+	scannedResult := app.ScannedDB.GetStore()
+	var unexpectedSerialNumbers []string
+	for i := from; i < to; i++ {
+		serialNumber := fmt.Sprintf("%0.12d", i)
+		if _, found := scannedResult[serialNumber]; !found {
+			unexpectedSerialNumbers = append(unexpectedSerialNumbers, serialNumber)
+		}
+	}
+
+	sort.Strings(unexpectedSerialNumbers)
+
+	return &unexpectedSerialNumbers, nil
 }
 
 func (app *BarcodeQueryAppImpl) Run() {

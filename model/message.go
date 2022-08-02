@@ -48,6 +48,7 @@ const (
 	ValidateLotResponse
 	TerminateValidateLotModeRequest
 	TerminateValidateLotModeResponse
+	ValidateStringResponse
 )
 
 type BarcodeQueryMessage struct {
