@@ -265,6 +265,7 @@ func (app *BarcodeQueryAppImpl) mainLogic() {
 
 func (app *BarcodeQueryAppImpl) runValidateMode() {
 	run := true
+	app.sendResponse(model.ValidateLotStartNoti, 1)
 
 	go func() {
 		// TODO add a terminate validate mode signal here
@@ -274,13 +275,15 @@ func (app *BarcodeQueryAppImpl) runValidateMode() {
 		validateString := app.ValidateBarcodeReader.Read()
 		err := app.validateLot(validateString)
 		if err == nil {
+			app.sendResponse(model.ValidateLotStartNoti, true)
 			break
+		} else {
+			app.sendResponse(model.ValidateLotStartNoti, false)
 		}
 	}
 }
 
 func (app *BarcodeQueryAppImpl) validateLot(validateString string) error {
-
 	return nil
 }
 

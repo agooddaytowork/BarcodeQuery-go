@@ -44,6 +44,10 @@ const (
 	GetTestModeStatusResponse
 	CloseCurrentLotRequest
 	CloseCurrentLotResponse
+	ValidateLotStartNoti
+	ValidateLotResponse
+	TerminateValidateLotModeRequest
+	TerminateValidateLotModeResponse
 )
 
 type BarcodeQueryMessage struct {
