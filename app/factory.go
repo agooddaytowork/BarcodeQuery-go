@@ -123,7 +123,7 @@ func GetBarcodeQueryAppImpl(configPath string, theConfig BarcodeAppConfig, dbBro
 		BarcodeAndSerialDB: &barcodeNSerialDB,
 		SerialAndBarcodeDB: &serialNBarcodeDB,
 		ScannedDB:          &scannedDB,
-		Reader:             theReader,
+		MainBarcodeReader:  theReader,
 		ConfigPath:         configPath,
 		CounterReport: model.CounterReport{
 			QueryCounter:             0,
