@@ -8,6 +8,7 @@ import (
 	"BarcodeQuery/model"
 	"BarcodeQuery/reader"
 	"BarcodeQuery/util"
+	"errors"
 	"fmt"
 	"github.com/textileio/go-threads/broadcast"
 	"log"
@@ -266,29 +267,25 @@ func (app *BarcodeQueryAppImpl) mainLogic() {
 
 }
 
+//TODO add an option for retrying validate mode
 func (app *BarcodeQueryAppImpl) runValidateMode() {
-	run := true
-	app.sendResponse(model.ValidateLotStartNoti, 1)
 
-	go func() {
-		<-app.ValidateModeTerminateSignal
-		run = false
-	}()
-	for run {
-		validateString := app.ValidateLotBarcodeReader.Read()
-		app.sendResponse(model.ValidateStringResponse, validateString)
-		unexpectedSerialNumbers, err := app.validateLot(validateString)
-		if err == nil {
-			break
-		}
-		app.sendResponse(model.ValidateLotResponse, model.ValidateLotResponsePayload{
-			UnexpectedSerialNumbers: *unexpectedSerialNumbers,
-			ErrorDetails:            err.Error(),
-		})
-	}
+	app.sendResponse(model.ValidateLotStartNoti, 1)
+	//go func() {
+	//	<-app.ValidateModeTerminateSignal
+	//	running = false
+	//}()
+	validateString := app.ValidateLotBarcodeReader.Read()
+	app.sendResponse(model.ValidateStringResponse, validateString)
+	unexpectedSerialNumbers, _ := app.validateLot(validateString)
+
+	app.sendResponse(model.ValidateLotResponse, model.ValidateLotResponsePayload{
+		UnexpectedSerialNumbers: unexpectedSerialNumbers,
+	})
+
 }
 
-func (app *BarcodeQueryAppImpl) validateLot(validateString string) (*[]string, error) {
+func (app *BarcodeQueryAppImpl) validateLot(validateString string) ([]string, error) {
 
 	elements := strings.Split(validateString, "-")
 
@@ -304,16 +301,20 @@ func (app *BarcodeQueryAppImpl) validateLot(validateString string) (*[]string, e
 	}
 	scannedResult := app.ScannedDB.GetStore()
 	var unexpectedSerialNumbers []string
-	for i := from; i < to; i++ {
+	for i := from; i <= to; i++ {
 		serialNumber := fmt.Sprintf("%0.12d", i)
 		if _, found := scannedResult[serialNumber]; !found {
 			unexpectedSerialNumbers = append(unexpectedSerialNumbers, serialNumber)
 		}
 	}
 
-	sort.Strings(unexpectedSerialNumbers)
+	if len(unexpectedSerialNumbers) > 0 {
+		sort.Strings(unexpectedSerialNumbers)
 
-	return &unexpectedSerialNumbers, nil
+		return unexpectedSerialNumbers, errors.New("found unexpected serial number")
+	}
+
+	return unexpectedSerialNumbers, nil
 }
 
 func (app *BarcodeQueryAppImpl) Run() {
